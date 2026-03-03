@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Header from "@/components/Header";
 
 export const metadata: Metadata = {
   title: "NBA PRA Predictor",
@@ -19,6 +20,7 @@ export default function RootLayout({
 
         {/* Main content */}
         <div className="relative z-10">
+          <Header />
           {children}
         </div>
       </body>
