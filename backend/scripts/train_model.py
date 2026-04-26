@@ -35,20 +35,27 @@ def safe_request(func, *args, **kwargs):
     return func(*args, **kwargs)
 
 
-def get_player_full_game_log(player_id: int, season: str = "2025-26"):
-    """Fetch a full season game log for one player."""
-    try:
-        game_log = safe_request(
-            playergamelog.PlayerGameLog,
-            player_id=player_id,
-            season=season,
-        )
-        df = game_log.get_data_frames()[0]
-        df["PLAYER_ID"] = player_id
-        return df
-    except Exception as e:
-        print(f"  Error fetching player {player_id}: {e}")
+def get_player_full_game_log(player_id: int, seasons: list = None):
+    """Fetch game logs across one or more seasons and concatenate them."""
+    if seasons is None:
+        seasons = ["2025-26"]
+    frames = []
+    for season in seasons:
+        try:
+            game_log = safe_request(
+                playergamelog.PlayerGameLog,
+                player_id=player_id,
+                season=season,
+            )
+            df = game_log.get_data_frames()[0]
+            if len(df) > 0:
+                df["PLAYER_ID"] = player_id
+                frames.append(df)
+        except Exception as e:
+            print(f"  Error fetching player {player_id} season {season}: {e}")
+    if not frames:
         return None
+    return pd.concat(frames, ignore_index=True)
 
 
 # ---------------------------------------------------------------------------
@@ -77,12 +84,18 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"])
     df["DAYS_REST"] = df["GAME_DATE"].diff().dt.days.fillna(3).clip(0, 7)
 
+    # Back-to-back indicator — strong fatigue signal
+    df["IS_B2B"] = (df["DAYS_REST"] == 1).astype(int)
+
     # Rolling averages for each stat (shift(1) so we never leak the current game)
     for stat in ["PTS", "REB", "AST", "PRA", "MIN"]:
         df[f"{stat}_L3"]     = df[stat].shift(1).rolling(window=3,  min_periods=1).mean()
         df[f"{stat}_L5"]     = df[stat].shift(1).rolling(window=5,  min_periods=1).mean()
         df[f"{stat}_L10"]    = df[stat].shift(1).rolling(window=10, min_periods=1).mean()
         df[f"{stat}_SEASON"] = df[stat].shift(1).expanding().mean()
+
+    # Consistency: rolling std of PRA over last 5 games (high = streaky, low = reliable)
+    df["PRA_STD_L5"] = df["PRA"].shift(1).rolling(window=5, min_periods=2).std().fillna(0)
 
     # Momentum: wins in last 5 games
     df["WIN"]        = (df["WL"] == "W").astype(int)
@@ -93,13 +106,13 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 FEATURE_COLS = [
-    "IS_HOME", "DAYS_REST",
+    "IS_HOME", "DAYS_REST", "IS_B2B",
     "PTS_L3", "PTS_L5", "PTS_L10", "PTS_SEASON",
     "REB_L3", "REB_L5", "REB_L10", "REB_SEASON",
     "AST_L3", "AST_L5", "AST_L10", "AST_SEASON",
     "PRA_L3", "PRA_L5", "PRA_L10", "PRA_SEASON",
     "MIN_L3", "MIN_L5", "MIN_L10", "MIN_SEASON",
-    "WIN_STREAK",
+    "PRA_STD_L5", "WIN_STREAK",
 ]
 
 
@@ -118,18 +131,22 @@ def chronological_split(df: pd.DataFrame, train_frac=0.70, val_frac=0.15):
     return df.iloc[:train_end], df.iloc[train_end:val_end], df.iloc[val_end:]
 
 
-def prepare_splits(player_ids: list, season: str = "2025-26"):
+def prepare_splits(player_ids: list, seasons: list = None):
     """
-    Fetch + engineer features for every player, then split and pool.
+    Fetch + engineer features for every player across multiple seasons,
+    then split and pool.
 
     Returns:
         (X_train, y_train, X_val, y_val, X_test, y_test)
     """
+    if seasons is None:
+        seasons = ["2023-24", "2024-25", "2025-26"]
+
     train_frames, val_frames, test_frames = [], [], []
 
     for i, pid in enumerate(player_ids):
-        print(f"  [{i+1}/{len(player_ids)}] player_id={pid}")
-        raw = get_player_full_game_log(pid, season)
+        print(f"  [{i+1}/{len(player_ids)}] player_id={pid}  (seasons: {seasons})")
+        raw = get_player_full_game_log(pid, seasons)
         if raw is None:
             continue
         featured = engineer_features(raw)
@@ -407,12 +424,12 @@ if __name__ == "__main__":
     print("NBA PRA Predictor — Full ML Pipeline")
     print("=" * 60)
 
-    season = "2025-26"
-    print(f"\n[Step 2] Collecting data for {len(TRAINING_PLAYERS)} players (season {season})...")
-    print("  (This takes a few minutes due to API rate limits)\n")
+    seasons = ["2023-24", "2024-25", "2025-26"]
+    print(f"\n[Step 2] Collecting data for {len(TRAINING_PLAYERS)} players across {seasons}...")
+    print("  (This takes ~10-15 minutes due to API rate limits)\n")
 
     X_train, y_train, X_val, y_val, X_test, y_test = prepare_splits(
-        TRAINING_PLAYERS, season=season
+        TRAINING_PLAYERS, seasons=seasons
     )
 
     # Step 3 — Baseline
