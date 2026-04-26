@@ -1,27 +1,7 @@
 "use client";
 
-import { useState } from "react";
-
-// Mock data for now — will replace with API later
-const MOCK_PLAYERS = [
-    { id: 1, name: "LeBron James", team: "LAL", position: "SF" },
-    { id: 2, name: "Stephen Curry", team: "GSW", position: "PG" },
-    { id: 3, name: "Kevin Durant", team: "PHX", position: "SF" },
-    { id: 4, name: "Giannis Antetokounmpo", team: "MIL", position: "PF" },
-    { id: 5, name: "Luka Doncic", team: "DAL", position: "PG" },
-    { id: 6, name: "Jayson Tatum", team: "BOS", position: "SF" },
-    { id: 7, name: "Joel Embiid", team: "PHI", position: "C" },
-    { id: 8, name: "Nikola Jokic", team: "DEN", position: "C" },
-    { id: 9, name: "Anthony Edwards", team: "MIN", position: "SG" },
-    { id: 10, name: "Shai Gilgeous-Alexander", team: "OKC", position: "PG" },
-];
-
-interface Player {
-    id: number;
-    name: string;
-    team: string;
-    position: string;
-}
+import { useState, useEffect } from "react";
+import { searchPlayers, Player } from "@/lib/api";
 
 interface PlayerSearchProps {
     onSelectPlayer: (player: Player) => void;
@@ -30,20 +10,34 @@ interface PlayerSearchProps {
 export default function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
     const [query, setQuery] = useState("");
     const [isOpen, setIsOpen] = useState(false);
+    const [players, setPlayers] = useState<Player[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const filteredPlayers = MOCK_PLAYERS.filter((player) =>
-        player.name.toLowerCase().includes(query.toLowerCase())
-    );
+    // Debounced search
+    useEffect(() => {
+        if (query.length < 2) {
+            setPlayers([]);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setIsLoading(true);
+            const results = await searchPlayers(query);
+            setPlayers(results);
+            setIsLoading(false);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [query]);
 
     const handleSelect = (player: Player) => {
         onSelectPlayer(player);
-        setQuery(player.name);
+        setQuery(player.full_name);
         setIsOpen(false);
     };
 
     return (
         <div className="relative w-full max-w-md">
-            {/* Search Input */}
             <div className="relative">
                 <input
                     type="text"
@@ -69,44 +63,38 @@ export default function PlayerSearch({ onSelectPlayer }: PlayerSearchProps) {
                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                     />
                 </svg>
+                {isLoading && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        <div className="w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+                    </div>
+                )}
             </div>
 
-            {/* Dropdown Results */}
-            {isOpen && query.length > 0 && (
+            {isOpen && query.length >= 2 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-hardwood border border-sideline rounded-lg shadow-xl overflow-hidden z-50">
-                    {filteredPlayers.length > 0 ? (
+                    {players.length > 0 ? (
                         <ul>
-                            {filteredPlayers.slice(0, 5).map((player) => (
+                            {players.map((player) => (
                                 <li key={player.id}>
                                     <button
                                         onClick={() => handleSelect(player)}
                                         className="w-full px-4 py-3 flex items-center justify-between hover:bg-sideline transition-colors text-left"
                                     >
                                         <div>
-                                            <p className="text-chalk font-medium">{player.name}</p>
-                                            <p className="text-dust text-sm">
-                                                {player.team} • {player.position}
-                                            </p>
+                                            <p className="text-chalk font-medium">{player.full_name}</p>
                                         </div>
-                                        <span className="text-gold text-sm font-mono">{player.team}</span>
                                     </button>
                                 </li>
                             ))}
                         </ul>
-                    ) : (
-                        <div className="px-4 py-3 text-dust text-center">
-                            No players found
-                        </div>
-                    )}
+                    ) : !isLoading ? (
+                        <div className="px-4 py-3 text-dust text-center">No players found</div>
+                    ) : null}
                 </div>
             )}
 
-            {/* Click outside to close */}
             {isOpen && (
-                <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setIsOpen(false)}
-                />
+                <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
             )}
         </div>
     );
