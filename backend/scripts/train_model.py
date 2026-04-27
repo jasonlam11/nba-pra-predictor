@@ -30,9 +30,32 @@ import os
 # Helpers
 # ---------------------------------------------------------------------------
 
-def safe_request(func, *args, **kwargs):
-    time.sleep(0.7)
-    return func(*args, **kwargs)
+CUSTOM_HEADERS = {
+    'Host': 'stats.nba.com',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0',
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'x-nba-stats-origin': 'stats',
+    'x-nba-stats-token': 'true',
+    'Connection': 'keep-alive',
+    'Referer': 'https://stats.nba.com/',
+    'Pragma': 'no-cache',
+    'Cache-Control': 'no-cache',
+}
+
+def safe_request(func, max_retries=3, *args, **kwargs):
+    for attempt in range(max_retries):
+        try:
+            time.sleep(1.0)
+            return func(*args, **kwargs, timeout=20, headers=CUSTOM_HEADERS)
+        except Exception as e:
+            print(f"  Attempt {attempt + 1}/{max_retries} failed: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(2 ** (attempt + 1))
+            else:
+                raise e
+    return None
 
 
 def get_player_full_game_log(player_id: int, seasons: list = None):
@@ -71,7 +94,8 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     if df is None or len(df) < 10:
         return None
 
-    # Sort oldest → newest so rolling windows look backward in time
+    # Convert before sorting — raw strings like "APR 01, 2024" sort alphabetically wrong
+    df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"])
     df = df.sort_values("GAME_DATE").reset_index(drop=True)
 
     # Target
@@ -80,8 +104,6 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     # Context features
     df["IS_HOME"] = df["MATCHUP"].apply(lambda x: 1 if "vs." in x else 0)
     df["OPPONENT"] = df["MATCHUP"].apply(lambda x: x.split()[-1])
-
-    df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"])
     df["DAYS_REST"] = df["GAME_DATE"].diff().dt.days.fillna(3).clip(0, 7)
 
     # Back-to-back indicator — strong fatigue signal
@@ -377,34 +399,57 @@ def save_model(model, best_params, baseline_mae, best_val_mae,
 # ---------------------------------------------------------------------------
 
 TRAINING_PLAYERS = [
-    # Guards
+    # Elite guards
     201939,  # Stephen Curry
     1628983, # Shai Gilgeous-Alexander
     1629029, # Luka Doncic
-    203076,  # Anthony Davis (big, but high usage)
     203081,  # Damian Lillard
     1629627, # Trae Young
     1629630, # Ja Morant
     1630173, # LaMelo Ball
     203914,  # Zach LaVine
+    1628378, # Donovan Mitchell
+    1626164, # Devin Booker
+    201935,  # James Harden
+    202681,  # Kyrie Irving
+    1630169, # Tyrese Haliburton
+    1628386, # Jalen Brunson
+    1628368, # De'Aaron Fox
+    1630178, # Tyrese Maxey
+    1627832, # Fred VanVleet
     # Wings / forwards
     1628369, # Jayson Tatum
+    1627759, # Jaylen Brown
     203507,  # Giannis Antetokounmpo
     2544,    # LeBron James
     1630162, # Anthony Edwards
     1629645, # RJ Barrett
-    203954,  # Joel Embiid
-    1629029, # Luka Doncic (also wing-like)
     202331,  # Paul George
+    201142,  # Kevin Durant
+    202695,  # Kawhi Leonard
+    202710,  # Jimmy Butler
+    1627783, # Pascal Siakam
+    1628969, # Mikal Bridges
+    201942,  # DeMar DeRozan
+    1627742, # Brandon Ingram
+    1628384, # OG Anunoby
+    1630578, # Scottie Barnes
     # Bigs / centers
     203999,  # Nikola Jokic
-    1629627, # Already listed — skip duplicates in practice
+    203076,  # Anthony Davis
+    203954,  # Joel Embiid
     203497,  # Rudy Gobert
-    203954,  # Joel Embiid (duplicate removed at runtime)
-    1629029, # Luka
     1630585, # Evan Mobley
-    1630578, # Scottie Barnes
     1629628, # Jaren Jackson Jr.
+    1628389, # Bam Adebayo
+    1626157, # Karl-Anthony Towns
+    1627734, # Domantas Sabonis
+    202696,  # Nikola Vucevic
+    203944,  # Julius Randle
+    1631094, # Alperen Sengun
+    1641705, # Victor Wembanyama
+    1630595, # Cade Cunningham
+    1630581, # Josh Giddey
 ]
 
 # Deduplicate while preserving order
