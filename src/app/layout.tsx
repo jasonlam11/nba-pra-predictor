@@ -14,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-court text-chalk antialiased">
+      <body className="min-h-screen bg-court text-chalk antialiased" suppressHydrationWarning>
         {/* Noise texture overlay */}
         <div className="court-texture fixed inset-0 pointer-events-none z-0" />
 
