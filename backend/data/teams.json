@@ -1,0 +1,242 @@
+{
+  "ATL": {
+    "city": "Atlanta",
+    "espn_team_id": 1,
+    "full_name": "Atlanta Hawks",
+    "nba_team_id": 1610612737,
+    "nickname": "Hawks",
+    "tricode": "ATL"
+  },
+  "BKN": {
+    "city": "Brooklyn",
+    "espn_team_id": 17,
+    "full_name": "Brooklyn Nets",
+    "nba_team_id": 1610612751,
+    "nickname": "Nets",
+    "tricode": "BKN"
+  },
+  "BOS": {
+    "city": "Boston",
+    "espn_team_id": 2,
+    "full_name": "Boston Celtics",
+    "nba_team_id": 1610612738,
+    "nickname": "Celtics",
+    "tricode": "BOS"
+  },
+  "CHA": {
+    "city": "Charlotte",
+    "espn_team_id": 30,
+    "full_name": "Charlotte Hornets",
+    "nba_team_id": 1610612766,
+    "nickname": "Hornets",
+    "tricode": "CHA"
+  },
+  "CHI": {
+    "city": "Chicago",
+    "espn_team_id": 4,
+    "full_name": "Chicago Bulls",
+    "nba_team_id": 1610612741,
+    "nickname": "Bulls",
+    "tricode": "CHI"
+  },
+  "CLE": {
+    "city": "Cleveland",
+    "espn_team_id": 5,
+    "full_name": "Cleveland Cavaliers",
+    "nba_team_id": 1610612739,
+    "nickname": "Cavaliers",
+    "tricode": "CLE"
+  },
+  "DAL": {
+    "city": "Dallas",
+    "espn_team_id": 6,
+    "full_name": "Dallas Mavericks",
+    "nba_team_id": 1610612742,
+    "nickname": "Mavericks",
+    "tricode": "DAL"
+  },
+  "DEN": {
+    "city": "Denver",
+    "espn_team_id": 7,
+    "full_name": "Denver Nuggets",
+    "nba_team_id": 1610612743,
+    "nickname": "Nuggets",
+    "tricode": "DEN"
+  },
+  "DET": {
+    "city": "Detroit",
+    "espn_team_id": 8,
+    "full_name": "Detroit Pistons",
+    "nba_team_id": 1610612765,
+    "nickname": "Pistons",
+    "tricode": "DET"
+  },
+  "GSW": {
+    "city": "Golden State",
+    "espn_team_id": 9,
+    "full_name": "Golden State Warriors",
+    "nba_team_id": 1610612744,
+    "nickname": "Warriors",
+    "tricode": "GSW"
+  },
+  "HOU": {
+    "city": "Houston",
+    "espn_team_id": 10,
+    "full_name": "Houston Rockets",
+    "nba_team_id": 1610612745,
+    "nickname": "Rockets",
+    "tricode": "HOU"
+  },
+  "IND": {
+    "city": "Indiana",
+    "espn_team_id": 11,
+    "full_name": "Indiana Pacers",
+    "nba_team_id": 1610612754,
+    "nickname": "Pacers",
+    "tricode": "IND"
+  },
+  "LAC": {
+    "city": "Los Angeles",
+    "espn_team_id": 12,
+    "full_name": "Los Angeles Clippers",
+    "nba_team_id": 1610612746,
+    "nickname": "Clippers",
+    "tricode": "LAC"
+  },
+  "LAL": {
+    "city": "Los Angeles",
+    "espn_team_id": 13,
+    "full_name": "Los Angeles Lakers",
+    "nba_team_id": 1610612747,
+    "nickname": "Lakers",
+    "tricode": "LAL"
+  },
+  "MEM": {
+    "city": "Memphis",
+    "espn_team_id": 29,
+    "full_name": "Memphis Grizzlies",
+    "nba_team_id": 1610612763,
+    "nickname": "Grizzlies",
+    "tricode": "MEM"
+  },
+  "MIA": {
+    "city": "Miami",
+    "espn_team_id": 14,
+    "full_name": "Miami Heat",
+    "nba_team_id": 1610612748,
+    "nickname": "Heat",
+    "tricode": "MIA"
+  },
+  "MIL": {
+    "city": "Milwaukee",
+    "espn_team_id": 15,
+    "full_name": "Milwaukee Bucks",
+    "nba_team_id": 1610612749,
+    "nickname": "Bucks",
+    "tricode": "MIL"
+  },
+  "MIN": {
+    "city": "Minnesota",
+    "espn_team_id": 16,
+    "full_name": "Minnesota Timberwolves",
+    "nba_team_id": 1610612750,
+    "nickname": "Timberwolves",
+    "tricode": "MIN"
+  },
+  "NOP": {
+    "city": "New Orleans",
+    "espn_team_id": 3,
+    "full_name": "New Orleans Pelicans",
+    "nba_team_id": 1610612740,
+    "nickname": "Pelicans",
+    "tricode": "NOP"
+  },
+  "NYK": {
+    "city": "New York",
+    "espn_team_id": 18,
+    "full_name": "New York Knicks",
+    "nba_team_id": 1610612752,
+    "nickname": "Knicks",
+    "tricode": "NYK"
+  },
+  "OKC": {
+    "city": "Oklahoma City",
+    "espn_team_id": 25,
+    "full_name": "Oklahoma City Thunder",
+    "nba_team_id": 1610612760,
+    "nickname": "Thunder",
+    "tricode": "OKC"
+  },
+  "ORL": {
+    "city": "Orlando",
+    "espn_team_id": 19,
+    "full_name": "Orlando Magic",
+    "nba_team_id": 1610612753,
+    "nickname": "Magic",
+    "tricode": "ORL"
+  },
+  "PHI": {
+    "city": "Philadelphia",
+    "espn_team_id": 20,
+    "full_name": "Philadelphia 76ers",
+    "nba_team_id": 1610612755,
+    "nickname": "76ers",
+    "tricode": "PHI"
+  },
+  "PHX": {
+    "city": "Phoenix",
+    "espn_team_id": 21,
+    "full_name": "Phoenix Suns",
+    "nba_team_id": 1610612756,
+    "nickname": "Suns",
+    "tricode": "PHX"
+  },
+  "POR": {
+    "city": "Portland",
+    "espn_team_id": 22,
+    "full_name": "Portland Trail Blazers",
+    "nba_team_id": 1610612757,
+    "nickname": "Trail Blazers",
+    "tricode": "POR"
+  },
+  "SAC": {
+    "city": "Sacramento",
+    "espn_team_id": 23,
+    "full_name": "Sacramento Kings",
+    "nba_team_id": 1610612758,
+    "nickname": "Kings",
+    "tricode": "SAC"
+  },
+  "SAS": {
+    "city": "San Antonio",
+    "espn_team_id": 24,
+    "full_name": "San Antonio Spurs",
+    "nba_team_id": 1610612759,
+    "nickname": "Spurs",
+    "tricode": "SAS"
+  },
+  "TOR": {
+    "city": "Toronto",
+    "espn_team_id": 28,
+    "full_name": "Toronto Raptors",
+    "nba_team_id": 1610612761,
+    "nickname": "Raptors",
+    "tricode": "TOR"
+  },
+  "UTA": {
+    "city": "Utah",
+    "espn_team_id": 26,
+    "full_name": "Utah Jazz",
+    "nba_team_id": 1610612762,
+    "nickname": "Jazz",
+    "tricode": "UTA"
+  },
+  "WAS": {
+    "city": "Washington",
+    "espn_team_id": 27,
+    "full_name": "Washington Wizards",
+    "nba_team_id": 1610612764,
+    "nickname": "Wizards",
+    "tricode": "WAS"
+  }
+}
