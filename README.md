@@ -94,6 +94,9 @@ python scripts/check_parity.py     # proves the bulk data matches nba_api
 is the guarantee the whole design rests on — if it fails, the app can no longer
 be hosted for free.
 
+Both run in CI on every push and pull request (`.github/workflows/ci.yml`),
+along with a check that `app.main` still imports none of the training stack.
+
 ## Layout
 
 ```

@@ -1,0 +1,82 @@
+# Runs on every push and pull request.
+#
+# The backend job deliberately builds a real snapshot rather than committing a
+# fixture: the build is the thing most likely to break (an upstream schema
+# change, a dependency that has no wheel for our Python), and it only takes
+# ~15s. check_offline then proves the request path still makes no network
+# calls, which is the guarantee free hosting depends on.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install
+        run: pip install -r backend/requirements-data.txt
+
+      - name: Build a snapshot
+        working-directory: backend
+        run: python scripts/build_snapshot.py --out data/snapshot.db
+
+      - name: Prove the request path makes no network calls
+        working-directory: backend
+        run: python scripts/check_offline.py
+
+      - name: Data-source parity invariants
+        working-directory: backend
+        run: python scripts/check_parity.py
+
+      - name: Serving deps must stay free of the training stack
+        working-directory: backend
+        run: |
+          # The API must not pull in pandas/sklearn/xgboost/etc. Keeping this
+          # true is what holds the deployed image near 21 MB.
+          python - <<'PY'
+          import sys
+          before = set(sys.modules)
+          sys.path.insert(0, ".")
+          from app.main import app  # noqa: F401
+          # Top-level names only: listing every submodule buries the signal in
+          # ~300 lines of pandas internals.
+          heavy = sorted({
+              m.split(".")[0] for m in set(sys.modules) - before
+              if m.split(".")[0] in
+              {"pandas","numpy","sklearn","scipy","xgboost","nba_api","pyarrow","joblib"}
+          })
+          if heavy:
+              print("FAIL: app.main pulled in", ", ".join(heavy))
+              sys.exit(1)
+          print("OK: app.main imports none of the heavy stack")
+          PY
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run build
