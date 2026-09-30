@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python
+venv/
+backend/venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# generated data artifacts (rebuilt by scripts/build_snapshot.py)
+backend/data/raw/
+backend/data/*.parquet
+backend/data/snapshot.db
+backend/data/snapshot.db.tmp

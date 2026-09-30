@@ -1,0 +1,28 @@
+# Dependencies for the offline data job (scripts/build_snapshot.py) and for
+# training (scripts/train_model.py). NOT installed on the serving host.
+#
+# Run these in CI (GitHub Actions) or locally. Nothing here is ever imported by
+# the request path.
+
+-r requirements.txt
+
+# Feature engineering and the prediction payloads the builder precomputes.
+pandas==2.3.3
+numpy==2.0.2
+
+# Model training and unpickling. Pinned so artifacts built in CI load
+# identically wherever a snapshot is rebuilt.
+scikit-learn==1.6.1
+scipy==1.13.1
+joblib==1.5.3
+xgboost==2.1.4
+
+# Reads the sportsdataverse bulk box-score parquet files.
+pyarrow==18.1.0
+
+# Static player/team id lists, used to map ESPN ids -> nba_api ids in
+# scripts/id_map.py, and the live comparison in scripts/check_parity.py.
+nba_api==1.10.2
+
+# Test client for scripts/check_offline.py.
+httpx==0.28.1
