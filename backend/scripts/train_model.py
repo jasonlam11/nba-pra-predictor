@@ -44,7 +44,9 @@ import sys
 # and train/serve parity is structural rather than a copy-paste promise.
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from app.features import engineer_features, FEATURE_COLS  # noqa: E402,F401
+from app.features import (  # noqa: E402,F401
+    engineer_features, FEATURE_COLS, OPP_FEATURE_COLS,
+)
 
 
 
@@ -52,7 +54,7 @@ from app.features import engineer_features, FEATURE_COLS  # noqa: E402,F401
 # Training data
 # ---------------------------------------------------------------------------
 
-def build_training_frame(years, min_games=20):
+def build_training_frame(years, min_games=20, with_opponent=False):
     """
     Pool engineered features for every player with enough games, from the free
     bulk parquet.
@@ -63,10 +65,15 @@ def build_training_frame(years, min_games=20):
     the bulk files takes seconds and covers the whole league.
     """
     from parquet_source import load_seasons
-    from espn_adapter import clean_box_scores, to_nba_gamelog
+    from espn_adapter import clean_box_scores, to_nba_gamelog, opponent_defense_history
 
     print(f"  loading seasons {list(years)} ...")
     clean = clean_box_scores(load_seasons(years))
+
+    hist = None
+    if with_opponent:
+        hist = opponent_defense_history(clean)
+        print(f"  opponent defense history: {len(hist)} team-games")
 
     frames = []
     kept = skipped = 0
@@ -75,7 +82,7 @@ def build_training_frame(years, min_games=20):
             skipped += 1
             continue
         log = to_nba_gamelog(group, player_id=int(espn_id))
-        featured = engineer_features(log)
+        featured = engineer_features(log, opp_history=hist)
         if featured is None or len(featured) < min_games:
             skipped += 1
             continue
@@ -93,7 +100,7 @@ def build_training_frame(years, min_games=20):
     return pooled
 
 
-def split_by_date(pooled: pd.DataFrame, train_frac=0.70, val_frac=0.15):
+def split_by_date(pooled: pd.DataFrame, feature_cols=None, train_frac=0.70, val_frac=0.15):
     """
     Split the pooled rows chronologically across the WHOLE league, not per
     player.
@@ -115,8 +122,10 @@ def split_by_date(pooled: pd.DataFrame, train_frac=0.70, val_frac=0.15):
     va = pooled[(dates > train_cut) & (dates <= val_cut)]
     te = pooled[dates > val_cut]
 
+    cols = feature_cols or FEATURE_COLS
+
     def xy(d):
-        return d[FEATURE_COLS], d["PRA"]
+        return d[cols], d["PRA"]
 
     print(f"\n  Train: {len(tr)} rows  (through {train_cut.date()})")
     print(f"  Val  : {len(va)} rows  ({train_cut.date()} -> {val_cut.date()})")
@@ -282,7 +291,9 @@ def final_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params):
 
     print("\n  Top 10 feature importances:")
     imp = (
-        pd.DataFrame({"feature": FEATURE_COLS,
+        # Use the columns actually trained on, not the module constant --
+        # those differ whenever opponent features are enabled.
+        pd.DataFrame({"feature": list(X_tv.columns),
                       "importance": model.feature_importances_})
         .sort_values("importance", ascending=False)
     )
@@ -298,7 +309,7 @@ def final_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params):
 
 def save_model(model, best_params, baseline_mae, best_val_mae,
                test_mae, n_players, n_train,
-               path=None, extra=None):
+               path=None, extra=None, feature_cols=None):
     # Relative default used to write models/pra_model.pkl next to wherever the
     # script happened to be run from, silently producing an artifact the API
     # never loads.
@@ -307,7 +318,7 @@ def save_model(model, best_params, baseline_mae, best_val_mae,
 
     payload = {
         "model":        model,
-        "feature_cols": FEATURE_COLS,
+        "feature_cols": list(feature_cols or FEATURE_COLS),
         "best_params":  best_params,
         "baseline_mae": round(float(baseline_mae), 3),
         "val_mae":      round(float(best_val_mae), 3),
@@ -343,6 +354,8 @@ if __name__ == "__main__":
                     help="how many seasons of history to train on")
     ap.add_argument("--min-games", type=int, default=20)
     ap.add_argument("--out", default=MODEL_PATH)
+    ap.add_argument("--with-opponent", action="store_true",
+                    help="add leakage-free opponent-strength features")
     args = ap.parse_args()
 
     from parquet_source import latest_available_season
@@ -354,11 +367,20 @@ if __name__ == "__main__":
     latest = latest_available_season()
     years = list(range(latest - args.seasons + 1, latest + 1))
 
+    feature_cols = list(FEATURE_COLS)
+    if args.with_opponent:
+        feature_cols += OPP_FEATURE_COLS
+
     print(f"\n[Step 2] Building training set from bulk parquet {years}")
-    pooled = build_training_frame(years, min_games=args.min_games)
+    print(f"  features: {len(feature_cols)}"
+          + (" (incl. opponent strength)" if args.with_opponent else ""))
+    pooled = build_training_frame(years, min_games=args.min_games,
+                                  with_opponent=args.with_opponent)
     n_players = pooled["PLAYER_ID"].nunique()
 
-    X_train, y_train, X_val, y_val, X_test, y_test = split_by_date(pooled)
+    X_train, y_train, X_val, y_val, X_test, y_test = split_by_date(
+        pooled, feature_cols=feature_cols
+    )
 
     # Step 3 — Baseline
     baseline_mae, _, _ = evaluate_baseline(X_val, y_val)
@@ -410,12 +432,14 @@ if __name__ == "__main__":
         test_mae=test_mae,
         n_players=n_players,
         n_train=len(X_train),
+        feature_cols=feature_cols,
         path=os.path.abspath(args.out),
         extra={
             "model_type": type(model).__name__,
             "data_source": "sportsdataverse bulk parquet",
             "seasons": ",".join(str(y) for y in years),
             "n_rows": len(pooled),
+            "with_opponent": args.with_opponent,
             "sklearn_version": __import__("sklearn").__version__,
         },
     )

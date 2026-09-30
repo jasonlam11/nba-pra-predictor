@@ -128,3 +128,72 @@ def to_nba_gamelog(df: pd.DataFrame, player_id: int = None) -> pd.DataFrame:
 
     out = out.sort_values("_SORT_DATE", ascending=False).drop(columns=["_SORT_DATE"])
     return out.reset_index(drop=True)
+
+
+def opponent_defense_history(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Per-team, per-game defensive ratings using ONLY games played before that game.
+
+    Returns columns: OPPONENT, GAME_DATE, OPP_PTS_ALLOWED, OPP_REB_ALLOWED,
+    OPP_AST_ALLOWED -- one row per (team, game date), where the values describe
+    what that team had allowed *going into* that game.
+
+    Leakage is the whole difficulty here. A season-long "team X allows 112 PPG"
+    includes the game being predicted, so a model fed that number is partly
+    reading the answer. Everything below is an expanding mean shifted by one
+    game, so a row never sees its own result.
+
+    `df` is cleaned box scores (see clean_box_scores) covering whole games --
+    pass the league-wide frame, not one player's rows.
+    """
+    d = df.copy()
+    d["_date"] = pd.to_datetime(d["game_date"])
+
+    # A player's row records their own team's output against `opponent`, so
+    # summing a game's rows by opponent gives what that opponent conceded.
+    game_totals = d.groupby("game_id")["points"].sum().rename("total_points")
+    d = d.merge(game_totals, on="game_id", how="left")
+
+    conceded = (
+        d.groupby(["opponent_team_abbreviation", "game_id", "_date"])
+        .agg(points=("points", "sum"), rebounds=("rebounds", "sum"),
+             assists=("assists", "sum"), total_points=("total_points", "first"))
+        .reset_index()
+        .rename(columns={"opponent_team_abbreviation": "OPPONENT"})
+        .sort_values(["OPPONENT", "_date"])
+    )
+
+    g = conceded.groupby("OPPONENT")
+    for src, dst in (("points", "OPP_PTS_ALLOWED"),
+                     ("rebounds", "OPP_REB_ALLOWED"),
+                     ("assists", "OPP_AST_ALLOWED")):
+        conceded[dst] = g[src].transform(lambda s: s.shift(1).expanding().mean())
+
+    # Season-to-date is slow to react to a defense that has changed (a trade, a
+    # returning rim protector), so also carry a 10-game form window.
+    conceded["OPP_PTS_ALLOWED_L10"] = g["points"].transform(
+        lambda s: s.shift(1).rolling(10, min_periods=1).mean()
+    )
+    # Pace proxy: total points scored by BOTH teams in the opponent's games.
+    # Points-allowed alone conflates a fast team with a bad defense.
+    conceded["OPP_PACE"] = g["total_points"].transform(
+        lambda s: s.shift(1).rolling(10, min_periods=1).mean()
+    )
+
+    # A team's first game of the earliest season has no prior games. Fill from
+    # the league's expanding average as of the same date -- also computed from
+    # earlier games only, so this does not reintroduce leakage.
+    league = conceded.sort_values("_date")
+    for col in ("OPP_PTS_ALLOWED", "OPP_REB_ALLOWED", "OPP_AST_ALLOWED",
+                "OPP_PTS_ALLOWED_L10", "OPP_PACE"):
+        league_avg = league[col].expanding().mean()
+        conceded.loc[league.index, col] = league.loc[:, col].fillna(league_avg)
+        # Anything still missing (the very first rows) falls back to the
+        # column's overall mean, which affects a handful of games.
+        conceded[col] = conceded[col].fillna(conceded[col].mean())
+
+    out = conceded[["OPPONENT", "_date", "OPP_PTS_ALLOWED",
+                    "OPP_REB_ALLOWED", "OPP_AST_ALLOWED",
+                    "OPP_PTS_ALLOWED_L10", "OPP_PACE"]].copy()
+    out = out.rename(columns={"_date": "GAME_DATE"})
+    return out.sort_values("GAME_DATE").reset_index(drop=True)
