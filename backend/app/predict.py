@@ -166,6 +166,8 @@ def make_prediction(
     season: dict,
     model_data: dict = None,
     next_game: dict = None,
+    opp_history: pd.DataFrame = None,
+    absence_history: pd.DataFrame = None,
 ) -> dict:
     """
     Generate PRA prediction using the trained model.
@@ -174,10 +176,11 @@ def make_prediction(
     correctly instead of being approximated with a single average.
 
     `next_game`, when supplied, carries the context of the game actually being
-    predicted -- {"is_home": bool, "days_rest": int}. Without it the last row of
-    the log is used as-is, which means IS_HOME/DAYS_REST/IS_B2B describe the
-    player's *previous* game rather than the upcoming one. The rolling stats are
-    correct either way; only the three context features are affected.
+    predicted -- {"is_home": bool, "days_rest": int} and optionally "overrides",
+    a dict of feature -> value for the upcoming matchup (opponent strength,
+    missing teammates). Without it the last row of the log is used as-is, which
+    means those features describe the player's *previous* game rather than the
+    upcoming one. The rolling stats are correct either way.
     """
 
     # --- Fallback path (no model or no season stats) ---
@@ -207,7 +210,9 @@ def make_prediction(
         val_mae      = model_data.get("val_mae", 6.0)
 
         # Engineer features from the full log
-        featured = engineer_features(full_log)
+        featured = engineer_features(
+            full_log, opp_history=opp_history, absence_history=absence_history
+        )
         if featured is None or len(featured) == 0:
             raise ValueError("engineer_features returned empty DataFrame")
 
@@ -220,6 +225,12 @@ def make_prediction(
             last_row["IS_HOME"] = 1 if next_game.get("is_home") else 0
             last_row["DAYS_REST"] = days_rest
             last_row["IS_B2B"] = 1 if days_rest == 1 else 0
+
+            # Opponent strength and missing teammates for tonight's game, not
+            # for whoever the player happened to face last time out.
+            for col, value in (next_game.get("overrides") or {}).items():
+                if col in last_row.columns:
+                    last_row[col] = value
 
         X = last_row[feature_cols]
 

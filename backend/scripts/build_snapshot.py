@@ -28,7 +28,10 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, ".."))
 
 from parquet_source import load_seasons, latest_available_season      # noqa: E402
-from espn_adapter import clean_box_scores, to_nba_gamelog             # noqa: E402
+from espn_adapter import (                                            # noqa: E402
+    clean_box_scores, to_nba_gamelog, opponent_defense_history,
+    team_absence_history, latest_opponent_ratings,
+)
 from id_map import build_id_map, match_rate, espn_key                 # noqa: E402
 import espn_live                                                      # noqa: E402
 from app.predict import (                                             # noqa: E402
@@ -170,6 +173,52 @@ def compute_team_defense(clean: pd.DataFrame, teams: dict) -> list:
     return rows
 
 
+def expected_minutes(clean: pd.DataFrame) -> dict:
+    """{espn_athlete_id: recent average minutes} from each player's last 10 games."""
+    d = clean[["athlete_id", "game_date", "minutes"]].copy()
+    d["minutes"] = pd.to_numeric(d["minutes"], errors="coerce").fillna(0.0)
+    d = d.sort_values("game_date")
+    return (
+        d.groupby("athlete_id")["minutes"]
+        .apply(lambda s: float(s.tail(10).mean()))
+        .to_dict()
+    )
+
+
+ABSENT_STATUSES = {"out", "doubtful"}
+
+
+def absence_from_injuries(players: dict, injuries: dict, exp_minutes: dict) -> dict:
+    """
+    {nba_team_id: {"minutes": float, "names": [...]}} expected to be missing tonight.
+
+    This is the production stand-in for team_absence_history. Training measures
+    absence as "did not play", which is only knowable after tip-off; here the
+    injury report has to carry it instead. The two are correlated but not the
+    same -- a Questionable player often suits up, and late scratches never
+    appear -- so the model sees a noisier version of this feature in production
+    than it did in training. Statuses are limited to Out/Doubtful to keep the
+    signal conservative rather than inflating absences that do not happen.
+    """
+    out = {}
+    for pid, row in players.items():
+        team_id, name, espn_id = row[7], row[2], row[1]
+        if team_id is None:
+            continue
+        info = injuries.get(name.lower())
+        if not info or str(info.get("status", "")).lower() not in ABSENT_STATUSES:
+            continue
+        mins = float(exp_minutes.get(espn_id, 0.0) or 0.0)
+        entry = out.setdefault(team_id, {"minutes": 0.0, "names": []})
+        entry["minutes"] += mins
+        entry["names"].append({"name": name, "status": info.get("status", ""),
+                               "minutes": round(mins, 1)})
+    for entry in out.values():
+        entry["minutes"] = round(entry["minutes"], 1)
+        entry["names"].sort(key=lambda x: -x["minutes"])
+    return out
+
+
 def next_game_context(games: list, teams: dict) -> dict:
     """
     {nba_team_id: {"is_home": bool, "game_date": Timestamp, "opponent": tricode}}
@@ -234,7 +283,9 @@ def build_players(clean: pd.DataFrame, id_map: dict, teams: dict) -> dict:
     return rows
 
 
-def build_predictions(clean, id_map, players, model_data, ctx_by_team):
+def build_predictions(clean, id_map, players, model_data, ctx_by_team,
+                      opp_hist=None, absence_hist=None, absent_by_team=None,
+                      opp_latest=None):
     """Run the model once per player and store the exact API payload."""
     pred_rows, log_rows = [], []
     skipped = 0
@@ -252,6 +303,7 @@ def build_predictions(clean, id_map, players, model_data, ctx_by_team):
         if len(log) < MIN_GAMES_FOR_PREDICTION:
             skipped += 1
             continue
+        team_id = player[7]
 
         for r in log.itertuples():
             log_rows.append((pid, r.Game_ID, r.GAME_DATE, r.MATCHUP, r.WL,
@@ -263,15 +315,23 @@ def build_predictions(clean, id_map, players, model_data, ctx_by_team):
 
         # Context of the game actually being predicted, when we know it.
         next_game = None
-        ctx = ctx_by_team.get(player[7])
+        absent = (absent_by_team or {}).get(team_id, {"minutes": 0.0, "names": []})
+        ctx = ctx_by_team.get(team_id)
         if ctx is not None:
             last_played = pd.to_datetime(log["GAME_DATE"].iloc[0], format="%b %d, %Y")
+            overrides = {"TEAM_MIN_ABSENT": absent["minutes"]}
+            # Tonight's opponent, rather than the last team this player faced.
+            overrides.update((opp_latest or {}).get(ctx["opponent"], {}))
             next_game = {
                 "is_home": ctx["is_home"],
                 "days_rest": int(max((ctx["game_date"] - last_played).days, 0)),
+                "overrides": overrides,
             }
 
-        prediction = make_prediction(log, season, model_data=model_data, next_game=next_game)
+        prediction = make_prediction(
+            log, season, model_data=model_data, next_game=next_game,
+            opp_history=opp_hist, absence_history=absence_hist,
+        )
 
         payload = {
             "player": {
@@ -287,6 +347,10 @@ def build_predictions(clean, id_map, players, model_data, ctx_by_team):
             "last_5_avg": last_5_avg,
             "season_avg": season,
             "reasons": _compute_reasons(log),
+            # Surfaced in the UI: who is out matters to a prop decision whether
+            # or not it moves the model much.
+            "absent_teammates": absent["names"][:5],
+            "absent_minutes": absent["minutes"],
         }
         pred_rows.append((pid, json.dumps(payload), log["GAME_DATE"].iloc[0],
                           float(prediction["total_pra"])))
@@ -400,9 +464,28 @@ def main():
     else:
         print("      WARNING: no model found; predictions fall back to averages")
 
+    # Feature histories. Built only when the model actually asks for those
+    # columns, so an older pickle keeps working unchanged.
+    wanted = set((model_data or {}).get("feature_cols", []))
+    opp_hist = absence_hist = opp_latest = None
+    if wanted & {"OPP_PTS_ALLOWED", "OPP_PACE", "OPP_PTS_ALLOWED_L10"}:
+        opp_hist = opponent_defense_history(clean)
+        opp_latest = latest_opponent_ratings(clean)
+        print(f"      opponent history: {len(opp_hist)} team-games")
+    if "TEAM_MIN_ABSENT" in wanted:
+        absence_hist = team_absence_history(clean)
+        print(f"      absence history:  {len(absence_hist)} team-games")
+
+    absent_by_team = absence_from_injuries(
+        players, injuries, expected_minutes(clean)
+    )
+    print(f"      teams with players out tonight: {len(absent_by_team)}")
+
     ctx_by_team = next_game_context(games_raw, teams)
     pred_rows, log_rows, skipped = build_predictions(
-        clean, id_map, players, model_data, ctx_by_team
+        clean, id_map, players, model_data, ctx_by_team,
+        opp_hist=opp_hist, absence_hist=absence_hist,
+        absent_by_team=absent_by_team, opp_latest=opp_latest,
     )
     print(f"      {len(pred_rows)} predictions ({skipped} players under "
           f"{MIN_GAMES_FOR_PREDICTION} games), {len(log_rows)} log rows")

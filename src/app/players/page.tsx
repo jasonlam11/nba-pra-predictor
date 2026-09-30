@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import PRACard from "@/components/PRACard";
 import StatCard from "@/components/StatCard";
 import PropLineAnalyzer from "@/components/PropLineAnalyzer";
+import AbsentTeammates from "@/components/AbsentTeammates";
 import GameHistoryChart from "@/components/LastFiveChart";
 import { Player, PlayerStats, StatType, searchPlayers, getPlayerStats } from "@/lib/api";
 import { usePinnedPlayers } from "@/lib/usePinnedPlayers";
@@ -211,6 +212,10 @@ export default function PlayersPage() {
                   />
                 </div>
                 <div className="space-y-4">
+                  <AbsentTeammates
+                    teammates={playerStats.absent_teammates}
+                    totalMinutes={playerStats.absent_minutes}
+                  />
                   <h3 className="font-display text-xl text-dust uppercase tracking-widest">Season Averages</h3>
                   <StatCard label="Points"   value={playerStats.season_avg.points}   color="gold"      size="sm" />
                   <StatCard label="Rebounds" value={playerStats.season_avg.rebounds} color="ice"       size="sm" />

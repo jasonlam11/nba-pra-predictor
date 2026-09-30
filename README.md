@@ -80,8 +80,27 @@ keeps the winner — so the saved artifact is not necessarily XGBoost. Check
 `model_type` in the pickle. Promote a candidate by replacing
 `models/pra_model.pkl`, then rebuild the snapshot.
 
-Current model: XGBoost, ~705 players / ~110k player-games, test MAE **6.06** PRA
-against a last-5-average baseline of **6.45**.
+Current model: XGBoost, 31 features, ~705 players / ~110k player-games, test MAE
+**5.88** PRA against a last-5-average baseline of **6.45**.
+
+Feature-set ablation, identical split and hyperparameters, 16,600 test rows:
+
+| features | test MAE | vs base |
+|---|---|---|
+| base rolling/context (25) | 6.059 | — |
+| + opponent strength (30) | 6.028 | +0.031 (t=6.2) |
+| + teammates out (26) | 5.912 | +0.147 (t=14.5) |
+| + both (31) | 5.880 | +0.180 (t=15.8) |
+
+Opponent strength is statistically real but practically negligible. Missing
+teammates is the signal that matters: players in the top quintile of absent
+teammate minutes beat their own 10-game form by +2.2 PRA, the bottom quintile
+by −1.5.
+
+**Caveat on that number.** Training measures absence as "did not play", which is
+only knowable after tip-off. In production the daily job substitutes the injury
+report (Out/Doubtful only), which is noisier, so the real-world gain is smaller
+than +0.18 and cannot be backtested — ESPN serves only the current report.
 
 ## Verification scripts
 

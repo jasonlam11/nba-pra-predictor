@@ -17,16 +17,20 @@ needs to know where the rows came from.
 import pandas as pd
 
 
-def engineer_features(df: pd.DataFrame, opp_history: pd.DataFrame = None) -> pd.DataFrame:
+def engineer_features(
+    df: pd.DataFrame,
+    opp_history: pd.DataFrame = None,
+    absence_history: pd.DataFrame = None,
+) -> pd.DataFrame:
     """
     Build rolling and contextual features from a raw game-log DataFrame.
 
     Returns None if there are fewer than 10 rows after processing.
 
-    `opp_history`, when given, adds how much the opponent had been conceding
-    going into each game (see espn_adapter.opponent_defense_history). It is
-    optional so a model trained without those columns keeps working --
-    make_prediction selects whatever feature list its own pickle recorded.
+    `opp_history` and `absence_history`, when given, add opponent strength and
+    missing-teammate minutes respectively (see espn_adapter). Both are optional
+    so a model trained without those columns keeps working -- make_prediction
+    selects whatever feature list its own pickle recorded.
     """
     if df is None or len(df) < 10:
         return None
@@ -71,6 +75,26 @@ def engineer_features(df: pd.DataFrame, opp_history: pd.DataFrame = None) -> pd.
     df["WIN"]        = (df["WL"] == "W").astype(int)
     df["WIN_STREAK"] = df["WIN"].shift(1).rolling(window=5, min_periods=1).sum()
 
+    if absence_history is not None:
+        before = len(df)
+        # The team tricode is the first token of "DEN vs. MIN".
+        df["_team"] = df["MATCHUP"].str.split().str[0]
+        df["_gid"] = df["Game_ID"].astype(str)
+        ah = absence_history.copy()
+        ah["_gid"] = ah["game_id"].astype(str)
+        df = df.merge(
+            ah[["team_abbreviation", "_gid", "TEAM_MIN_ABSENT"]],
+            left_on=["_team", "_gid"], right_on=["team_abbreviation", "_gid"],
+            how="left", validate="m:1",
+        ).drop(columns=["_team", "_gid", "team_abbreviation"])
+        if len(df) != before:
+            raise ValueError(
+                f"absence join changed row count {before} -> {len(df)}"
+            )
+        # A team's first games have no squad history yet; 0 means "nobody out",
+        # which is also the safe default when the information is unavailable.
+        df["TEAM_MIN_ABSENT"] = df["TEAM_MIN_ABSENT"].fillna(0.0)
+
     if opp_history is not None:
         before = len(df)
         df = df.merge(
@@ -93,6 +117,10 @@ OPP_FEATURE_COLS = [
     "OPP_PTS_ALLOWED", "OPP_REB_ALLOWED", "OPP_AST_ALLOWED",
     "OPP_PTS_ALLOWED_L10", "OPP_PACE",
 ]
+
+# Expected minutes of rotation teammates who are not playing. Measured as the
+# single strongest addition to the base set (see train_model docstring).
+ABSENCE_FEATURE_COLS = ["TEAM_MIN_ABSENT"]
 
 
 FEATURE_COLS = [

@@ -56,9 +56,18 @@ export interface TeamDefense {
     overall_rank: number;
 }
 
+export interface AbsentTeammate {
+    name: string;
+    status: string;   // "Out" | "Doubtful"
+    minutes: number;  // recent minutes per game, i.e. the usage now up for grabs
+}
+
 export interface PlayerStats {
     player: Player;
     prediction: Prediction;
+    /** Rotation teammates ruled out — their minutes tend to redistribute. */
+    absent_teammates?: AbsentTeammate[];
+    absent_minutes?: number;
     recent_games: GameLog[];
     last_20_games: GameLog[];
     last_5_avg: {

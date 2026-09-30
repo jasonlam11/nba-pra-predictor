@@ -45,7 +45,7 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from app.features import (  # noqa: E402,F401
-    engineer_features, FEATURE_COLS, OPP_FEATURE_COLS,
+    engineer_features, FEATURE_COLS, OPP_FEATURE_COLS, ABSENCE_FEATURE_COLS,
 )
 
 
@@ -54,7 +54,8 @@ from app.features import (  # noqa: E402,F401
 # Training data
 # ---------------------------------------------------------------------------
 
-def build_training_frame(years, min_games=20, with_opponent=False):
+def build_training_frame(years, min_games=20, with_opponent=False,
+                         with_absence=False):
     """
     Pool engineered features for every player with enough games, from the free
     bulk parquet.
@@ -65,7 +66,10 @@ def build_training_frame(years, min_games=20, with_opponent=False):
     the bulk files takes seconds and covers the whole league.
     """
     from parquet_source import load_seasons
-    from espn_adapter import clean_box_scores, to_nba_gamelog, opponent_defense_history
+    from espn_adapter import (
+        clean_box_scores, to_nba_gamelog, opponent_defense_history,
+        team_absence_history,
+    )
 
     print(f"  loading seasons {list(years)} ...")
     clean = clean_box_scores(load_seasons(years))
@@ -75,6 +79,11 @@ def build_training_frame(years, min_games=20, with_opponent=False):
         hist = opponent_defense_history(clean)
         print(f"  opponent defense history: {len(hist)} team-games")
 
+    absence = None
+    if with_absence:
+        absence = team_absence_history(clean)
+        print(f"  teammate absence history: {len(absence)} team-games")
+
     frames = []
     kept = skipped = 0
     for espn_id, group in clean.groupby("athlete_id"):
@@ -82,7 +91,7 @@ def build_training_frame(years, min_games=20, with_opponent=False):
             skipped += 1
             continue
         log = to_nba_gamelog(group, player_id=int(espn_id))
-        featured = engineer_features(log, opp_history=hist)
+        featured = engineer_features(log, opp_history=hist, absence_history=absence)
         if featured is None or len(featured) < min_games:
             skipped += 1
             continue
@@ -356,6 +365,8 @@ if __name__ == "__main__":
     ap.add_argument("--out", default=MODEL_PATH)
     ap.add_argument("--with-opponent", action="store_true",
                     help="add leakage-free opponent-strength features")
+    ap.add_argument("--with-absence", action="store_true",
+                    help="add missing-teammate-minutes feature")
     args = ap.parse_args()
 
     from parquet_source import latest_available_season
@@ -370,12 +381,17 @@ if __name__ == "__main__":
     feature_cols = list(FEATURE_COLS)
     if args.with_opponent:
         feature_cols += OPP_FEATURE_COLS
+    if args.with_absence:
+        feature_cols += ABSENCE_FEATURE_COLS
 
     print(f"\n[Step 2] Building training set from bulk parquet {years}")
+    extras = ([" opponent"] if args.with_opponent else []) + \
+             ([" absence"] if args.with_absence else [])
     print(f"  features: {len(feature_cols)}"
-          + (" (incl. opponent strength)" if args.with_opponent else ""))
+          + (f" (incl.{','.join(extras)})" if extras else ""))
     pooled = build_training_frame(years, min_games=args.min_games,
-                                  with_opponent=args.with_opponent)
+                                  with_opponent=args.with_opponent,
+                                  with_absence=args.with_absence)
     n_players = pooled["PLAYER_ID"].nunique()
 
     X_train, y_train, X_val, y_val, X_test, y_test = split_by_date(
@@ -440,6 +456,7 @@ if __name__ == "__main__":
             "seasons": ",".join(str(y) for y in years),
             "n_rows": len(pooled),
             "with_opponent": args.with_opponent,
+            "with_absence": args.with_absence,
             "sklearn_version": __import__("sklearn").__version__,
         },
     )

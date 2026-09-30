@@ -25,6 +25,8 @@ export default function AboutPage() {
               ["Back-to-back", "Whether this is the second game in two nights"],
               ["Win streak", "Rolling wins over last 5 games"],
               ["Home/away", "Home court indicator"],
+              ["Teammates out", "Minutes belonging to rotation players ruled out — usage has to go somewhere"],
+              ["Opponent strength", "Points, rebounds and assists the opponent has been allowing, plus pace"],
             ].map(([name, desc]) => (
               <li key={name} className="flex gap-3">
                 <span className="text-gold font-mono font-bold shrink-0">{name}</span>
@@ -41,7 +43,7 @@ export default function AboutPage() {
             seasons, covering every player with at least 20 games — about 700 players, not a hand-picked
             sample. The train/validation/test split is chronological across the whole league at 70/15/15,
             so the model is only ever evaluated on games that happen after the ones it learned from.
-            On held-out data it averages about 6.1 PRA of error, against 6.4 for simply predicting a
+            On held-out data it averages about 5.9 PRA of error, against 6.4 for simply predicting a
             player&apos;s last-5-game average.
           </p>
         </section>
@@ -50,7 +52,10 @@ export default function AboutPage() {
           <h3 className="font-display text-xl text-gold mb-3">Where the Data Comes From</h3>
           <p className="text-chalk/80 text-sm leading-relaxed">
             Box scores come from the free sportsdataverse bulk dataset, with schedules and injury
-            reports from ESPN&apos;s public feeds. A scheduled job rebuilds the whole dataset once a day
+            reports from ESPN&apos;s public feeds. One caveat worth stating plainly: the model learned
+            &quot;teammates out&quot; from who actually played, but before tip-off that has to be inferred
+            from the injury report, which is a noisier signal. Expect that feature to help less in
+            practice than it did in testing. A scheduled job rebuilds the whole dataset once a day
             and precomputes every prediction, so the site itself makes no live calls to any stats
             provider. That means results are as of the last refresh rather than live — last night&apos;s
             games land the following morning.

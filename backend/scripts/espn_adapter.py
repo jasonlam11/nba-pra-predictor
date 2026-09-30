@@ -197,3 +197,120 @@ def opponent_defense_history(df: pd.DataFrame) -> pd.DataFrame:
                     "OPP_PTS_ALLOWED_L10", "OPP_PACE"]].copy()
     out = out.rename(columns={"_date": "GAME_DATE"})
     return out.sort_values("GAME_DATE").reset_index(drop=True)
+
+
+SQUAD_LOOKBACK_GAMES = 5
+
+
+def team_absence_history(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Per-team, per-game: how many expected minutes of the usual squad are missing.
+
+    This is the strongest signal available from box scores alone. When a
+    rotation player sits, his minutes and usage are redistributed, and his
+    teammates' PRA rises accordingly -- measured across four seasons, players in
+    the top quintile of absent-teammate minutes beat their own 10-game form by
+    +2.2 PRA while the bottom quintile fell 1.5 short, a 3.7 PRA spread.
+
+    Returns columns: team_abbreviation, game_id, TEAM_MIN_ABSENT.
+
+    Definitions, all using prior games only:
+      - a player's expected minutes = his 10-game average BEFORE this game
+      - the "usual squad" = anyone who appeared in the team's previous
+        SQUAD_LOOKBACK_GAMES games
+      - absent = in the usual squad, but no box-score row for this game
+
+    NOTE on train/serve skew: here absence is who *did not play*, which is only
+    knowable after tip-off. At prediction time the daily job substitutes the
+    injury report, which is a noisier proxy -- so the production benefit is
+    smaller than the offline measurement. See build_snapshot.absence_from_injuries.
+    """
+    d = df[["game_id", "game_date", "athlete_id", "team_abbreviation", "minutes"]].copy()
+    d["game_date"] = pd.to_datetime(d["game_date"])
+    d["minutes"] = pd.to_numeric(d["minutes"], errors="coerce").fillna(0.0)
+    d = d.sort_values(["athlete_id", "game_date"])
+
+    # Expected minutes going into each game (shift(1) => never sees tonight).
+    d["MIN_L10_PRE"] = d.groupby("athlete_id")["minutes"].transform(
+        lambda s: s.shift(1).rolling(10, min_periods=3).mean()
+    )
+
+    out = []
+    for team, tdf in d.groupby("team_abbreviation", sort=False):
+        order = (
+            tdf[["game_id", "game_date"]]
+            .drop_duplicates()
+            .sort_values("game_date")
+            .reset_index(drop=True)
+        )
+        if len(order) <= SQUAD_LOOKBACK_GAMES:
+            continue
+        idx = {g: i for i, g in enumerate(order["game_id"])}
+        t = tdf.assign(_i=tdf["game_id"].map(idx)).dropna(subset=["_i"])
+
+        played = (
+            t.pivot_table(index="_i", columns="athlete_id", values="minutes",
+                          aggfunc="size", fill_value=0)
+            .reindex(range(len(order)), fill_value=0)
+            .gt(0)
+        )
+        # Last known expected minutes for every player at every team-game,
+        # carried forward across games they missed.
+        expected = (
+            t.pivot_table(index="_i", columns="athlete_id", values="MIN_L10_PRE",
+                          aggfunc="last")
+            .reindex(range(len(order)))
+            .ffill()
+            .fillna(0.0)
+        )
+        # Appeared in any of the previous N games.
+        squad = (
+            played.rolling(SQUAD_LOOKBACK_GAMES, min_periods=1).sum().shift(1).fillna(0).gt(0)
+        )
+
+        absent = squad & ~played
+        totals = (expected.where(absent, 0.0)).sum(axis=1)
+
+        out.append(pd.DataFrame({
+            "team_abbreviation": team,
+            "game_id": order["game_id"].values,
+            "TEAM_MIN_ABSENT": totals.values,
+        }).iloc[SQUAD_LOOKBACK_GAMES:])
+
+    if not out:
+        return pd.DataFrame(columns=["team_abbreviation", "game_id", "TEAM_MIN_ABSENT"])
+    return pd.concat(out, ignore_index=True)
+
+
+def latest_opponent_ratings(df: pd.DataFrame) -> dict:
+    """
+    {tricode: {OPP_* : value}} as they stand going into the NEXT game.
+
+    opponent_defense_history gives each past game its own pre-game rating; this
+    is the same calculation carried one game further, using every game played
+    so far, which is what a prediction for tonight needs.
+    """
+    d = df.copy()
+    d["_date"] = pd.to_datetime(d["game_date"])
+    game_totals = d.groupby("game_id")["points"].sum().rename("total_points")
+    d = d.merge(game_totals, on="game_id", how="left")
+
+    conceded = (
+        d.groupby(["opponent_team_abbreviation", "game_id", "_date"])
+        .agg(points=("points", "sum"), rebounds=("rebounds", "sum"),
+             assists=("assists", "sum"), total_points=("total_points", "first"))
+        .reset_index()
+        .rename(columns={"opponent_team_abbreviation": "OPPONENT"})
+        .sort_values(["OPPONENT", "_date"])
+    )
+
+    out = {}
+    for team, t in conceded.groupby("OPPONENT"):
+        out[str(team)] = {
+            "OPP_PTS_ALLOWED": float(t["points"].mean()),
+            "OPP_REB_ALLOWED": float(t["rebounds"].mean()),
+            "OPP_AST_ALLOWED": float(t["assists"].mean()),
+            "OPP_PTS_ALLOWED_L10": float(t["points"].tail(10).mean()),
+            "OPP_PACE": float(t["total_points"].tail(10).mean()),
+        }
+    return out
