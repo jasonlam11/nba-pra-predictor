@@ -1,0 +1,50 @@
+# Retrains the PRA model from the bulk parquet.
+#
+# Manual / monthly rather than daily: the feature set is rolling averages, so
+# the model changes far more slowly than the data does. Retraining takes a few
+# minutes; refreshing the snapshot takes seconds.
+#
+# This does NOT publish automatically. It uploads the candidate artifact and
+# prints its metrics so a human can compare against the live model before
+# committing it.
+
+name: Train model
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "How many seasons of history to train on"
+        default: "4"
+  schedule:
+    - cron: "0 7 1 * *"   # 1st of each month
+
+permissions:
+  contents: read
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+
+      - run: pip install -r backend/requirements-data.txt
+
+      - name: Train
+        working-directory: backend
+        run: |
+          python scripts/train_model.py \
+            --seasons "${{ github.event.inputs.seasons || 4 }}" \
+            --out models/pra_model_candidate.pkl
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pra-model-candidate
+          path: backend/models/pra_model_candidate.pkl

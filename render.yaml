@@ -1,0 +1,34 @@
+# Render blueprint for the FastAPI backend (free tier).
+#
+# The free plan gives 512 MB RAM and 750 instance-hours/month with no credit
+# card. It sleeps after 15 minutes idle and takes ~1 minute to wake -- that cold
+# start is the only real cost of hosting this for nothing.
+#
+# Render's outbound IPs are blocked by stats.nba.com. That does not matter here
+# because the API never calls it: it downloads the prebuilt snapshot at startup
+# (SNAPSHOT_URL) and serves every request from that file.
+
+services:
+  - type: web
+    name: nba-pra-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.9.18"
+
+      # Published by .github/workflows/refresh-data.yml.
+      - key: SNAPSHOT_URL
+        value: https://github.com/jasonlam11/nba-pra-predictor/releases/download/data-snapshot/snapshot.db
+
+      # /tmp is writable on Render even when the app directory is not.
+      - key: SNAPSHOT_DIR
+        value: /tmp/nba-snapshot
+
+      # Set this to the deployed frontend origin, comma-separated for several.
+      - key: CORS_ORIGINS
+        sync: false

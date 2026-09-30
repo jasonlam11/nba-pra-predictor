@@ -1,36 +1,139 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NBA PRA Predictor
 
-## Getting Started
+Predicts a player's **P**oints + **R**ebounds + **A**ssists for their next game,
+using a model trained on four seasons of box scores. Next.js frontend, FastAPI
+backend, and a scheduled job that rebuilds the data once a day.
 
-First, run the development server:
+## Why it works the way it does
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+The obvious design — call the NBA's stats API when a user asks for a player — does
+not survive contact with reality. `stats.nba.com` rate-limits aggressively and
+**blocks datacenter IP ranges** (AWS, GCP, Azure, Render, Vercel), so an app that
+scrapes on demand is slow locally and simply cannot be deployed on a free host.
+
+So nothing is fetched at request time. A daily job does all the work offline and
+writes one SQLite snapshot; the API only reads it. That makes the request path
+fast, impossible to rate-limit, and free to host anywhere.
+
+All data sources are free and need no API key:
+
+| Source | Used for |
+|---|---|
+| [sportsdataverse bulk box scores](https://github.com/sportsdataverse/sportsdataverse-data) | Every player-game back to 2002, refreshed daily. ~0.6 MB per season. |
+| ESPN public JSON feeds | Today's schedule, injury report. |
+
+## Architecture
+
+```
+GitHub Actions (daily 06:30 UTC)
+  └─ scripts/build_snapshot.py
+       ├─ downloads bulk parquet          (free, no key, no IP block)
+       ├─ maps ESPN ids -> nba_api ids
+       ├─ runs the model for every player
+       └─ writes snapshot.db  ──published as a GitHub Release asset──┐
+                                                                     │
+Render (free tier)                                                   │
+  └─ FastAPI ── downloads snapshot at startup ◄──────────────────────┘
+       └─ serves every endpoint from indexed SQLite reads, zero upstream calls
+
+Vercel (free tier)
+  └─ Next.js frontend ──► FastAPI
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Running locally
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Backend** (Python 3.9+):
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cd backend
+python -m venv venv && source venv/bin/activate
+pip install -r requirements-data.txt      # serving deps + the data job's extras
+python scripts/build_snapshot.py          # builds data/snapshot.db, ~15s
+uvicorn app.main:app --reload --port 8000
+```
 
-## Learn More
+`requirements.txt` alone is enough to *serve* an existing snapshot;
+`requirements-data.txt` adds what's needed to *build* one (pyarrow, xgboost, nba_api).
 
-To learn more about Next.js, take a look at the following resources:
+**Frontend:**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm install
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Then open http://localhost:3000. `.env.local` should contain:
 
-## Deploy on Vercel
+```
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Retraining
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+cd backend
+python scripts/train_model.py --seasons 4 --out models/pra_model_candidate.pkl
+```
+
+Compares Ridge, RandomForest and XGBoost on a chronological validation split and
+keeps the winner — so the saved artifact is not necessarily XGBoost. Check
+`model_type` in the pickle. Promote a candidate by replacing
+`models/pra_model.pkl`, then rebuild the snapshot.
+
+Current model: XGBoost, ~705 players / ~110k player-games, test MAE **6.06** PRA
+against a last-5-average baseline of **6.45**.
+
+## Verification scripts
+
+```bash
+python scripts/check_offline.py    # proves no endpoint makes a network call
+python scripts/check_parity.py     # proves the bulk data matches nba_api
+```
+
+`check_offline.py` severs the socket layer and then exercises every endpoint. It
+is the guarantee the whole design rests on — if it fails, the app can no longer
+be hosted for free.
+
+## Layout
+
+```
+src/                        Next.js app router frontend
+backend/
+  app/
+    main.py                 FastAPI routes — snapshot reads only
+    store.py                read-only SQLite accessor
+    features.py             feature engineering (shared by train + serve)
+    predict.py              prediction + stat summaries (shared)
+  scripts/
+    build_snapshot.py       the daily job
+    parquet_source.py       downloads/caches the bulk files
+    espn_adapter.py         bulk box scores -> nba_api column shape
+    espn_live.py            ESPN schedule + injuries
+    id_map.py               ESPN athlete id -> nba_api player id
+    train_model.py          training pipeline
+    check_offline.py        no-network proof
+    check_parity.py         data-source parity gate
+    fetch_data.py           legacy nba_api scraper, no longer on any code path
+```
+
+## Deploying
+
+`render.yaml` describes the backend service. Set `CORS_ORIGINS` to the deployed
+frontend's origin and `NEXT_PUBLIC_API_URL` on Vercel to the Render URL. Both
+free tiers suffice; the only cost is Render's ~1 minute cold start after 15
+minutes of inactivity.
+
+**Run the data workflow before the first deploy.** The backend downloads its
+snapshot from the `data-snapshot` release, and that release does not exist until
+the workflow has run once. Trigger it manually from the Actions tab
+(*Refresh data snapshot* → *Run workflow*); otherwise the first deploy comes up
+with `/health` reporting `"status": "degraded"` and no data to serve.
+
+The snapshot is not committed to the repo — it is ~9 MB and would add several GB
+of history per year — so a fresh clone has no `backend/data/snapshot.db` either.
+Build one locally with `python scripts/build_snapshot.py`.
+
+## Disclaimer
+
+Informational and educational only. Predictions are statistical estimates, not
+guarantees. Gamble responsibly.

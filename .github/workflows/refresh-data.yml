@@ -1,0 +1,65 @@
+# Rebuilds the daily snapshot the API serves from.
+#
+# Runs on GitHub's free tier (unlimited minutes for public repos). It downloads
+# ~1.2 MB of free bulk box scores, runs the model for every player, and
+# publishes one SQLite file as a Release asset.
+#
+# The snapshot is published as a release asset rather than committed because a
+# ~9 MB binary committed daily would add several GB of git history per year.
+
+name: Refresh data snapshot
+
+on:
+  schedule:
+    # 06:30 UTC — after sportsdataverse publishes its daily update (~05:00 UTC).
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          # Pinned to the serving runtime so the model pickle round-trips.
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install data-job dependencies
+        run: pip install -r backend/requirements-data.txt
+
+      - name: Build snapshot
+        working-directory: backend
+        run: python scripts/build_snapshot.py --out data/snapshot.db
+
+      - name: Publish snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # `create ... || true` so the first run makes the release and later
+          # runs just replace the asset on it.
+          gh release create data-snapshot \
+            --title "Daily data snapshot" \
+            --notes "Rebuilt automatically. See .github/workflows/refresh-data.yml" \
+            || true
+          gh release upload data-snapshot backend/data/snapshot.db --clobber
+
+      - name: Commit refreshed id map
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add backend/data/id_map.json
+          # The id map is small and text; committing it makes ID churn reviewable.
+          git diff --cached --quiet || git commit -m "chore: refresh player id map"
+          git push
