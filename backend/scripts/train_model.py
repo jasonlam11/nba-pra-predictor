@@ -1,10 +1,14 @@
 """
-Train an XGBoost model to predict player PRA (Points + Rebounds + Assists)
+Train a model to predict player PRA (Points + Rebounds + Assists).
+
+Compares Ridge, RandomForest and XGBoost and keeps whichever wins on the
+validation set -- so despite the name, the saved artifact is not necessarily
+XGBoost. Check `model_type` in the pickle.
 
 Pipeline:
-  1. Fetch game logs for a diverse set of players
+  1. Load every player's game log from the free bulk parquet
   2. Engineer rolling features
-  3. Chronological 3-way split (70 / 15 / 15) per player
+  3. Chronological 3-way split (70 / 15 / 15) by date across the league
   4. Evaluate a naive baseline (L5 rolling average)
   5. Compare Ridge, RandomForest, and XGBoost on the validation set
   6. Tune hyperparameters for the best model on the validation set
@@ -12,11 +16,8 @@ Pipeline:
   8. Save model + metadata to disk
 """
 
-from nba_api.stats.static import players
-from nba_api.stats.endpoints import playergamelog
 import pandas as pd
 import numpy as np
-import time
 import pickle
 from sklearn.linear_model import Ridge
 from sklearn.ensemble import RandomForestRegressor
@@ -25,180 +26,105 @@ from sklearn.model_selection import ParameterGrid
 import xgboost as xgb
 from datetime import datetime
 import os
+import sys
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Training data now comes from the free bulk parquet (see build_training_frame).
+# The old stats.nba.com scraping helpers -- CUSTOM_HEADERS, safe_request and
+# get_player_full_game_log -- and the 47-player hardcoded TRAINING_PLAYERS pool
+# were removed with them. Every player with enough games is now used.
 # ---------------------------------------------------------------------------
 
-CUSTOM_HEADERS = {
-    'Host': 'stats.nba.com',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0',
-    'Accept': 'application/json, text/plain, */*',
-    'Accept-Language': 'en-US,en;q=0.5',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'x-nba-stats-origin': 'stats',
-    'x-nba-stats-token': 'true',
-    'Connection': 'keep-alive',
-    'Referer': 'https://stats.nba.com/',
-    'Pragma': 'no-cache',
-    'Cache-Control': 'no-cache',
-}
 
-def safe_request(func, max_retries=3, *args, **kwargs):
-    for attempt in range(max_retries):
-        try:
-            time.sleep(1.0)
-            return func(*args, **kwargs, timeout=20, headers=CUSTOM_HEADERS)
-        except Exception as e:
-            print(f"  Attempt {attempt + 1}/{max_retries} failed: {e}")
-            if attempt < max_retries - 1:
-                time.sleep(2 ** (attempt + 1))
-            else:
-                raise e
-    return None
+# ---------------------------------------------------------------------------
+# Feature engineering
+# ---------------------------------------------------------------------------
+# Moved to app/features.py so the API can import it without pulling in xgboost
+# and sklearn.ensemble. Re-exported here so existing references keep working
+# and train/serve parity is structural rather than a copy-paste promise.
+
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from app.features import engineer_features, FEATURE_COLS  # noqa: E402,F401
 
 
-def get_player_full_game_log(player_id: int, seasons: list = None):
-    """Fetch game logs across one or more seasons and concatenate them."""
-    if seasons is None:
-        seasons = ["2025-26"]
+
+# ---------------------------------------------------------------------------
+# Training data
+# ---------------------------------------------------------------------------
+
+def build_training_frame(years, min_games=20):
+    """
+    Pool engineered features for every player with enough games, from the free
+    bulk parquet.
+
+    This replaces a loop that scraped 47 hardcoded player ids one at a time with
+    a 1s sleep between calls. That took ~15 minutes, and rate limiting silently
+    truncated it -- the shipped model recorded n_players=21 out of 47. Reading
+    the bulk files takes seconds and covers the whole league.
+    """
+    from parquet_source import load_seasons
+    from espn_adapter import clean_box_scores, to_nba_gamelog
+
+    print(f"  loading seasons {list(years)} ...")
+    clean = clean_box_scores(load_seasons(years))
+
     frames = []
-    for season in seasons:
-        try:
-            game_log = safe_request(
-                playergamelog.PlayerGameLog,
-                player_id=player_id,
-                season=season,
-            )
-            df = game_log.get_data_frames()[0]
-            if len(df) > 0:
-                df["PLAYER_ID"] = player_id
-                frames.append(df)
-        except Exception as e:
-            print(f"  Error fetching player {player_id} season {season}: {e}")
+    kept = skipped = 0
+    for espn_id, group in clean.groupby("athlete_id"):
+        if len(group) < min_games:
+            skipped += 1
+            continue
+        log = to_nba_gamelog(group, player_id=int(espn_id))
+        featured = engineer_features(log)
+        if featured is None or len(featured) < min_games:
+            skipped += 1
+            continue
+        featured = featured.copy()
+        featured["PLAYER_ID"] = int(espn_id)
+        frames.append(featured)
+        kept += 1
+
     if not frames:
-        return None
-    return pd.concat(frames, ignore_index=True)
-
-
-# ---------------------------------------------------------------------------
-# Feature engineering  (also imported by main.py for live predictions)
-# ---------------------------------------------------------------------------
-
-def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Build rolling and contextual features from a raw game-log DataFrame.
-
-    Returns None if there are fewer than 10 rows after processing.
-    """
-    if df is None or len(df) < 10:
-        return None
-
-    # Convert before sorting — raw strings like "APR 01, 2024" sort alphabetically wrong
-    df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"])
-    df = df.sort_values("GAME_DATE").reset_index(drop=True)
-
-    # Target
-    df["PRA"] = df["PTS"] + df["REB"] + df["AST"]
-
-    # Context features
-    df["IS_HOME"] = df["MATCHUP"].apply(lambda x: 1 if "vs." in x else 0)
-    df["OPPONENT"] = df["MATCHUP"].apply(lambda x: x.split()[-1])
-    df["DAYS_REST"] = df["GAME_DATE"].diff().dt.days.fillna(3).clip(0, 7)
-
-    # Back-to-back indicator — strong fatigue signal
-    df["IS_B2B"] = (df["DAYS_REST"] == 1).astype(int)
-
-    # Rolling averages for each stat (shift(1) so we never leak the current game)
-    for stat in ["PTS", "REB", "AST", "PRA", "MIN"]:
-        df[f"{stat}_L3"]     = df[stat].shift(1).rolling(window=3,  min_periods=1).mean()
-        df[f"{stat}_L5"]     = df[stat].shift(1).rolling(window=5,  min_periods=1).mean()
-        df[f"{stat}_L10"]    = df[stat].shift(1).rolling(window=10, min_periods=1).mean()
-        df[f"{stat}_SEASON"] = df[stat].shift(1).expanding().mean()
-
-    # Consistency: rolling std of PRA over last 5 games (high = streaky, low = reliable)
-    df["PRA_STD_L5"] = df["PRA"].shift(1).rolling(window=5, min_periods=2).std().fillna(0)
-
-    # Momentum: wins in last 5 games
-    df["WIN"]        = (df["WL"] == "W").astype(int)
-    df["WIN_STREAK"] = df["WIN"].shift(1).rolling(window=5, min_periods=1).sum()
-
-    df = df.dropna()
-    return df
-
-
-FEATURE_COLS = [
-    "IS_HOME", "DAYS_REST", "IS_B2B",
-    "PTS_L3", "PTS_L5", "PTS_L10", "PTS_SEASON",
-    "REB_L3", "REB_L5", "REB_L10", "REB_SEASON",
-    "AST_L3", "AST_L5", "AST_L10", "AST_SEASON",
-    "PRA_L3", "PRA_L5", "PRA_L10", "PRA_SEASON",
-    "MIN_L3", "MIN_L5", "MIN_L10", "MIN_SEASON",
-    "PRA_STD_L5", "WIN_STREAK",
-]
-
-
-# ---------------------------------------------------------------------------
-# Chronological split
-# ---------------------------------------------------------------------------
-
-def chronological_split(df: pd.DataFrame, train_frac=0.70, val_frac=0.15):
-    """
-    Split a player's game log chronologically into train / val / test.
-    Games are already sorted oldest → newest by engineer_features.
-    """
-    n = len(df)
-    train_end = int(n * train_frac)
-    val_end   = int(n * (train_frac + val_frac))
-    return df.iloc[:train_end], df.iloc[train_end:val_end], df.iloc[val_end:]
-
-
-def prepare_splits(player_ids: list, seasons: list = None):
-    """
-    Fetch + engineer features for every player across multiple seasons,
-    then split and pool.
-
-    Returns:
-        (X_train, y_train, X_val, y_val, X_test, y_test)
-    """
-    if seasons is None:
-        seasons = ["2023-24", "2024-25", "2025-26"]
-
-    train_frames, val_frames, test_frames = [], [], []
-
-    for i, pid in enumerate(player_ids):
-        print(f"  [{i+1}/{len(player_ids)}] player_id={pid}  (seasons: {seasons})")
-        raw = get_player_full_game_log(pid, seasons)
-        if raw is None:
-            continue
-        featured = engineer_features(raw)
-        if featured is None or len(featured) < 15:
-            print(f"    Skipped — too few rows after engineering")
-            continue
-
-        tr, va, te = chronological_split(featured)
-        if len(tr) < 5 or len(va) < 2 or len(te) < 2:
-            print(f"    Skipped — split produced empty partition")
-            continue
-
-        train_frames.append(tr)
-        val_frames.append(va)
-        test_frames.append(te)
-
-    if not train_frames:
         raise RuntimeError("No usable player data collected.")
 
-    def pool(frames):
-        combined = pd.concat(frames, ignore_index=True)
-        X = combined[FEATURE_COLS]
-        y = combined["PRA"]
-        return X, y
+    pooled = pd.concat(frames, ignore_index=True)
+    print(f"  {kept} players kept, {skipped} skipped (<{min_games} usable games)")
+    print(f"  {len(pooled)} player-games pooled")
+    return pooled
 
-    X_train, y_train = pool(train_frames)
-    X_val,   y_val   = pool(val_frames)
-    X_test,  y_test  = pool(test_frames)
 
-    print(f"\n  Train: {len(X_train)} samples  |  Val: {len(X_val)}  |  Test: {len(X_test)}")
+def split_by_date(pooled: pd.DataFrame, train_frac=0.70, val_frac=0.15):
+    """
+    Split the pooled rows chronologically across the WHOLE league, not per
+    player.
+
+    Splitting inside each player's log lets the model train on games that happen
+    after the ones it is tested on for a different player, which flatters the
+    score. A single global date cut measures what the app actually does: predict
+    a future game from past games only.
+
+    Returns (X_train, y_train, X_val, y_val, X_test, y_test).
+    """
+    pooled = pooled.sort_values("GAME_DATE").reset_index(drop=True)
+    dates = pooled["GAME_DATE"]
+
+    train_cut = dates.quantile(train_frac)
+    val_cut = dates.quantile(train_frac + val_frac)
+
+    tr = pooled[dates <= train_cut]
+    va = pooled[(dates > train_cut) & (dates <= val_cut)]
+    te = pooled[dates > val_cut]
+
+    def xy(d):
+        return d[FEATURE_COLS], d["PRA"]
+
+    print(f"\n  Train: {len(tr)} rows  (through {train_cut.date()})")
+    print(f"  Val  : {len(va)} rows  ({train_cut.date()} -> {val_cut.date()})")
+    print(f"  Test : {len(te)} rows  (after {val_cut.date()})")
+
+    X_train, y_train = xy(tr)
+    X_val, y_val = xy(va)
+    X_test, y_test = xy(te)
     return X_train, y_train, X_val, y_val, X_test, y_test
 
 
@@ -372,7 +298,11 @@ def final_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params):
 
 def save_model(model, best_params, baseline_mae, best_val_mae,
                test_mae, n_players, n_train,
-               path="models/pra_model.pkl"):
+               path=None, extra=None):
+    # Relative default used to write models/pra_model.pkl next to wherever the
+    # script happened to be run from, silently producing an artifact the API
+    # never loads.
+    path = os.path.abspath(path or MODEL_PATH)
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
     payload = {
@@ -386,6 +316,7 @@ def save_model(model, best_params, baseline_mae, best_val_mae,
         "n_train":      n_train,
         "trained_at":   datetime.now().isoformat(),
     }
+    payload.update(extra or {})
 
     with open(path, "wb") as f:
         pickle.dump(payload, f)
@@ -394,88 +325,40 @@ def save_model(model, best_params, baseline_mae, best_val_mae,
     print(f"  baseline_MAE={baseline_mae:.2f}  val_MAE={best_val_mae:.2f}  test_MAE={test_mae:.2f}")
 
 
-# ---------------------------------------------------------------------------
-# Player pool — diverse roles and usage levels
-# ---------------------------------------------------------------------------
-
-TRAINING_PLAYERS = [
-    # Elite guards
-    201939,  # Stephen Curry
-    1628983, # Shai Gilgeous-Alexander
-    1629029, # Luka Doncic
-    203081,  # Damian Lillard
-    1629627, # Trae Young
-    1629630, # Ja Morant
-    1630173, # LaMelo Ball
-    203914,  # Zach LaVine
-    1628378, # Donovan Mitchell
-    1626164, # Devin Booker
-    201935,  # James Harden
-    202681,  # Kyrie Irving
-    1630169, # Tyrese Haliburton
-    1628386, # Jalen Brunson
-    1628368, # De'Aaron Fox
-    1630178, # Tyrese Maxey
-    1627832, # Fred VanVleet
-    # Wings / forwards
-    1628369, # Jayson Tatum
-    1627759, # Jaylen Brown
-    203507,  # Giannis Antetokounmpo
-    2544,    # LeBron James
-    1630162, # Anthony Edwards
-    1629645, # RJ Barrett
-    202331,  # Paul George
-    201142,  # Kevin Durant
-    202695,  # Kawhi Leonard
-    202710,  # Jimmy Butler
-    1627783, # Pascal Siakam
-    1628969, # Mikal Bridges
-    201942,  # DeMar DeRozan
-    1627742, # Brandon Ingram
-    1628384, # OG Anunoby
-    1630578, # Scottie Barnes
-    # Bigs / centers
-    203999,  # Nikola Jokic
-    203076,  # Anthony Davis
-    203954,  # Joel Embiid
-    203497,  # Rudy Gobert
-    1630585, # Evan Mobley
-    1629628, # Jaren Jackson Jr.
-    1628389, # Bam Adebayo
-    1626157, # Karl-Anthony Towns
-    1627734, # Domantas Sabonis
-    202696,  # Nikola Vucevic
-    203944,  # Julius Randle
-    1631094, # Alperen Sengun
-    1641705, # Victor Wembanyama
-    1630595, # Cade Cunningham
-    1630581, # Josh Giddey
-]
-
-# Deduplicate while preserving order
-_seen = set()
-TRAINING_PLAYERS = [
-    pid for pid in TRAINING_PLAYERS
-    if pid not in _seen and not _seen.add(pid)
-]
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
+MODEL_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "models", "pra_model.pkl"
+)
+
 if __name__ == "__main__":
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--seasons", type=int, default=4,
+                    help="how many seasons of history to train on")
+    ap.add_argument("--min-games", type=int, default=20)
+    ap.add_argument("--out", default=MODEL_PATH)
+    args = ap.parse_args()
+
+    from parquet_source import latest_available_season
+
     print("=" * 60)
     print("NBA PRA Predictor — Full ML Pipeline")
     print("=" * 60)
 
-    seasons = ["2023-24", "2024-25", "2025-26"]
-    print(f"\n[Step 2] Collecting data for {len(TRAINING_PLAYERS)} players across {seasons}...")
-    print("  (This takes ~10-15 minutes due to API rate limits)\n")
+    latest = latest_available_season()
+    years = list(range(latest - args.seasons + 1, latest + 1))
 
-    X_train, y_train, X_val, y_val, X_test, y_test = prepare_splits(
-        TRAINING_PLAYERS, seasons=seasons
-    )
+    print(f"\n[Step 2] Building training set from bulk parquet {years}")
+    pooled = build_training_frame(years, min_games=args.min_games)
+    n_players = pooled["PLAYER_ID"].nunique()
+
+    X_train, y_train, X_val, y_val, X_test, y_test = split_by_date(pooled)
 
     # Step 3 — Baseline
     baseline_mae, _, _ = evaluate_baseline(X_val, y_val)
@@ -487,47 +370,65 @@ if __name__ == "__main__":
     if best_name == "xgboost":
         best_params, best_val_mae = tune_xgboost(X_train, y_train, X_val, y_val)
     else:
-        print(f"\n[Step 7] {best_name} beat XGBoost — tuning {best_name} instead")
-        # For Ridge/RF, just use the already-fit model; skip grid search
+        print(f"\n[Step 7] {best_name} beat XGBoost — no grid search for it")
         best_model, best_val_mae = results[best_name]
         best_params = {}
 
-    # Step 8 — Final test evaluation
-    if best_name == "xgboost" or best_params:
+    # Step 8 — Final evaluation on the held-out test set.
+    if best_name == "xgboost":
         model, test_mae, test_rmse, test_r2 = final_model(
             X_train, y_train, X_val, y_val, X_test, y_test, best_params
         )
     else:
-        # Non-XGBoost winner: retrain on train+val
-        best_model_cls = Ridge if best_name == "ridge" else RandomForestRegressor
+        # Refit the WINNING estimator on train+val.
+        #
+        # This branch used to do `best_model_cls()` -- constructing a fresh
+        # default estimator and throwing away the model compare_models had
+        # already selected and fitted. For RandomForest that silently discarded
+        # n_estimators=100, max_depth=8, random_state=42 and trained an
+        # unseeded default instead. sklearn.clone keeps the chosen
+        # hyperparameters while giving an unfitted copy to refit.
+        from sklearn.base import clone
+
+        model = clone(best_model)
         X_tv = pd.concat([X_train, X_val])
         y_tv = pd.concat([y_train, y_val])
-        model = best_model_cls()
         model.fit(X_tv, y_tv)
+        best_params = {
+            k: v for k, v in model.get_params().items()
+            if v is not None and not callable(v)
+        }
         test_mae, test_rmse, test_r2 = report(
             "Final model (test set)", y_test, model.predict(X_test)
         )
-        best_params = {}
 
-    # Save
     save_model(
         model=model,
         best_params=best_params,
         baseline_mae=baseline_mae,
         best_val_mae=best_val_mae,
         test_mae=test_mae,
-        n_players=len(TRAINING_PLAYERS),
+        n_players=n_players,
         n_train=len(X_train),
-        path="models/pra_model.pkl",
+        path=os.path.abspath(args.out),
+        extra={
+            "model_type": type(model).__name__,
+            "data_source": "sportsdataverse bulk parquet",
+            "seasons": ",".join(str(y) for y in years),
+            "n_rows": len(pooled),
+            "sklearn_version": __import__("sklearn").__version__,
+        },
     )
 
     print("\n" + "=" * 60)
     print("Pipeline complete!")
+    print(f"  Model        : {type(model).__name__}")
+    print(f"  Players      : {n_players}")
     print(f"  Baseline MAE : {baseline_mae:.2f} PRA pts")
     print(f"  Best val MAE : {best_val_mae:.2f} PRA pts")
     print(f"  Test MAE     : {test_mae:.2f} PRA pts")
     if test_mae < baseline_mae:
-        print(f"  Model beats baseline by {baseline_mae - test_mae:.2f} pts ✓")
+        print(f"  Model beats baseline by {baseline_mae - test_mae:.2f} pts")
     else:
-        print("  ⚠ Model does NOT beat baseline — consider adding more data or features")
+        print("  WARNING: model does NOT beat baseline")
     print("=" * 60)
