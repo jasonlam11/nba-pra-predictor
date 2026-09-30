@@ -47,8 +47,12 @@ const CustomTooltip = ({
   stat,
 }: {
   active?: boolean;
-  payload?: any[];
-  label?: string;
+  // Recharts hands the tooltip a readonly array; a mutable any[] here makes
+  // the spread at the <Tooltip content={...}> call site fail type checking
+  // and breaks `next build`.
+  payload?: readonly any[];
+  // Recharts types the category label as string | number.
+  label?: string | number;
   stat: StatType;
 }) => {
   if (active && payload && payload.length) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import PRACard from "@/components/PRACard";
 import StatCard from "@/components/StatCard";
 import PropLineAnalyzer from "@/components/PropLineAnalyzer";
@@ -24,17 +24,21 @@ export default function PlayersPage() {
 
   const { isPinned, togglePin } = usePinnedPlayers();
 
-  let debounceTimer: ReturnType<typeof setTimeout>;
+  // useRef, not a plain `let`: a local is reinitialized on every render, so
+  // clearTimeout() was always clearing `undefined` and the debounce never
+  // actually cancelled -- every keystroke fired a search. Matches the pattern
+  // already used on the compare page.
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuery(val);
-    clearTimeout(debounceTimer);
+    clearTimeout(debounceTimer.current);
     if (val.length < 2) {
       setResults([]);
       return;
     }
-    debounceTimer = setTimeout(async () => {
+    debounceTimer.current = setTimeout(async () => {
       setSearching(true);
       const data = await searchPlayers(val);
       setResults(data.slice(0, 20));

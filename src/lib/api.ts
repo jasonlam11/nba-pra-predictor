@@ -172,3 +172,32 @@ export async function getPlayerStats(playerId: number): Promise<{ data: PlayerSt
         return { data: null, error: "Could not reach the server. Make sure the backend is running." };
     }
 }
+export interface SnapshotHealth {
+    status: string;
+    snapshot_loaded: boolean;
+    snapshot_built_at: string | null;
+    snapshot_age_hours: number | null;
+    stale: boolean;
+    n_players: number;
+    n_predictions: number;
+    data_through: string | null;
+    model_trained_at: string | null;
+    source_years: string | null;
+}
+
+/**
+ * Freshness of the data the API is serving.
+ *
+ * Predictions come from a snapshot rebuilt once a day, not from a live feed,
+ * so the UI has to say when the data is from rather than imply it is current.
+ */
+export async function getHealth(): Promise<SnapshotHealth | null> {
+    try {
+        const res = await fetch(`${API_BASE}/health`);
+        if (!res.ok) return null;
+        return res.json();
+    } catch (error) {
+        console.error("Health error:", error);
+        return null;
+    }
+}

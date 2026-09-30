@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import DataFreshness from "./DataFreshness";
 
 const NAV_LINKS = [
   { href: "/", label: "Dashboard" },
@@ -30,6 +31,7 @@ export default function Header() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
+          <DataFreshness />
           {NAV_LINKS.map(({ href, label }) => (
             <Link
               key={href}
@@ -76,6 +78,9 @@ export default function Header() {
               {label}
             </Link>
           ))}
+          <div className="pt-2 border-t border-sideline mt-1">
+            <DataFreshness />
+          </div>
         </nav>
       )}
     </header>
