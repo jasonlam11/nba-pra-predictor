@@ -18,7 +18,7 @@ import shutil
 import sqlite3
 import tempfile
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PATH = os.path.join(HERE, "..", "data", "snapshot.db")
@@ -142,9 +142,15 @@ def age_hours():
     if not built:
         return None
     try:
-        return (datetime.now() - datetime.fromisoformat(built)).total_seconds() / 3600
+        ts = datetime.fromisoformat(built)
     except ValueError:
         return None
+    # Snapshots built before built_at carried a timezone are naive, and were
+    # written by a UTC runner -- treat them as UTC rather than as local time,
+    # which would otherwise report a negative age and never flag staleness.
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    return (datetime.now(timezone.utc) - ts).total_seconds() / 3600
 
 
 def is_stale() -> bool:

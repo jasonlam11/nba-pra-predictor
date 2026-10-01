@@ -503,7 +503,10 @@ def main():
                     help="skip writing today's injury report to data/injuries/")
     args = ap.parse_args()
 
-    started = datetime.now()
+    # UTC, not local. built_at is compared against the serving host's clock to
+    # decide whether data is stale, and CI writes it from a UTC runner while a
+    # developer's machine is not; a naive timestamp makes the two incomparable.
+    started = datetime.now(timezone.utc)
     print("=" * 62)
     print("Building snapshot")
     print("=" * 62)
@@ -617,7 +620,7 @@ def main():
 
     size_mb = os.path.getsize(out) / 1e6
     print(f"      wrote {out} ({size_mb:.1f} MB) in "
-          f"{(datetime.now()-started).total_seconds():.1f}s")
+          f"{(datetime.now(timezone.utc)-started).total_seconds():.1f}s")
     print("\nOK")
     return 0
 
