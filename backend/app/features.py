@@ -21,16 +21,18 @@ def engineer_features(
     df: pd.DataFrame,
     opp_history: pd.DataFrame = None,
     absence_history: pd.DataFrame = None,
+    shot_history: pd.DataFrame = None,
 ) -> pd.DataFrame:
     """
     Build rolling and contextual features from a raw game-log DataFrame.
 
     Returns None if there are fewer than 10 rows after processing.
 
-    `opp_history` and `absence_history`, when given, add opponent strength and
-    missing-teammate minutes respectively (see espn_adapter). Both are optional
-    so a model trained without those columns keeps working -- make_prediction
-    selects whatever feature list its own pickle recorded.
+    `opp_history`, `absence_history` and `shot_history`, when given, add
+    opponent strength, missing-teammate minutes and shot quality respectively
+    (see espn_adapter). All are optional so a model trained without those
+    columns keeps working -- make_prediction selects whatever feature list its
+    own pickle recorded.
     """
     if df is None or len(df) < 10:
         return None
@@ -74,6 +76,25 @@ def engineer_features(
     # Momentum: wins in last 5 games
     df["WIN"]        = (df["WL"] == "W").astype(int)
     df["WIN_STREAK"] = df["WIN"].shift(1).rolling(window=5, min_periods=1).sum()
+
+    if shot_history is not None and "ESPN_ID" in df.columns:
+        before = len(df)
+        df = df.merge(shot_history, on=["ESPN_ID", "GAME_DATE"], how="left", validate="m:1")
+        if len(df) != before:
+            raise ValueError(f"shot join changed row count {before} -> {len(df)}")
+        # Players with too little shot history keep a neutral value rather than
+        # being dropped -- dropna() below would otherwise delete their rows.
+        #
+        # The league fallback is load-bearing. A player's own median is NaN when
+        # he has no shot rows at all, so filling only within the player leaves
+        # NaN, and dropna() then removes him entirely. That silently shrank the
+        # training set by 110 players and 6,600 rows and moved the test split,
+        # making before/after comparisons meaningless.
+        for c in SHOT_FEATURE_COLS:
+            if c in df.columns:
+                df[c] = df[c].fillna(df[c].median())
+                if df[c].isna().any():
+                    df[c] = df[c].fillna(float(shot_history[c].median()))
 
     if absence_history is not None:
         before = len(df)
@@ -121,6 +142,14 @@ OPP_FEATURE_COLS = [
 # Expected minutes of rotation teammates who are not playing. Measured as the
 # single strongest addition to the base set (see train_model docstring).
 ABSENCE_FEATURE_COLS = ["TEAM_MIN_ABSENT"]
+
+# Shot-location quality. The box score records whether shots went in; this
+# records how good they were, which is the more stable of the two and is what
+# recent scoring regresses toward.
+SHOT_FEATURE_COLS = [
+    "SHOT_EXP_PTS_L5", "SHOT_EXP_PTS_L10",
+    "SHOT_FGA_L5", "SHOT_DIST_L5", "SHOT_HOT_L5",
+]
 
 
 FEATURE_COLS = [

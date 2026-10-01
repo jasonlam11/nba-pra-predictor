@@ -162,3 +162,47 @@ def load_official_season_stats(year: int) -> pd.DataFrame:
         & (df["season_type"] == "regular-season")
         & (df["per_mode"] == "totals")
     ]
+
+
+NBA_SHOTS_BASE = (
+    "https://github.com/sportsdataverse/sportsdataverse-data/"
+    "releases/download/nba_stats_shots"
+)
+
+
+def load_shots(year: int) -> pd.DataFrame:
+    """
+    Shot-level data for one season: location, distance, and result per attempt.
+
+    Also sourced from stats.nba.com via sportsdataverse, and -- unlike that
+    project's game-log files -- refreshed daily during the season. Roughly
+    4 MB per season.
+
+    Returns None if the season is not published.
+    """
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    path = os.path.join(CACHE_DIR, f"shots_{year}.parquet")
+
+    fresh = (
+        os.path.exists(path)
+        and (time.time() - os.path.getmtime(path)) < 12 * 3600
+    )
+    if not fresh:
+        url = f"{NBA_SHOTS_BASE}/shots_{year}.parquet"
+        print(f"  downloading shots_{year}.parquet ...")
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "nba-pra-predictor"})
+            with urllib.request.urlopen(req, timeout=120) as resp, open(path + ".tmp", "wb") as fh:
+                fh.write(resp.read())
+            os.replace(path + ".tmp", path)
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return None if not os.path.exists(path) else pd.read_parquet(path)
+            raise
+    return pd.read_parquet(path)
+
+
+def load_shots_seasons(years) -> pd.DataFrame:
+    frames = [load_shots(y) for y in years]
+    frames = [f for f in frames if f is not None and len(f)]
+    return pd.concat(frames, ignore_index=True) if frames else None

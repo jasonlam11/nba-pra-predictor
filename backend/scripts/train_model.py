@@ -46,6 +46,7 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from app.features import (  # noqa: E402,F401
     engineer_features, FEATURE_COLS, OPP_FEATURE_COLS, ABSENCE_FEATURE_COLS,
+    SHOT_FEATURE_COLS,
 )
 
 
@@ -55,7 +56,7 @@ from app.features import (  # noqa: E402,F401
 # ---------------------------------------------------------------------------
 
 def build_training_frame(years, min_games=20, with_opponent=False,
-                         with_absence=False):
+                         with_absence=False, with_shots=False):
     """
     Pool engineered features for every player with enough games, from the free
     bulk parquet.
@@ -68,7 +69,7 @@ def build_training_frame(years, min_games=20, with_opponent=False,
     from parquet_source import load_seasons
     from espn_adapter import (
         clean_box_scores, to_nba_gamelog, opponent_defense_history,
-        team_absence_history,
+        team_absence_history, shot_quality_history,
     )
 
     print(f"  loading seasons {list(years)} ...")
@@ -78,6 +79,19 @@ def build_training_frame(years, min_games=20, with_opponent=False,
     if with_opponent:
         hist = opponent_defense_history(clean)
         print(f"  opponent defense history: {len(hist)} team-games")
+
+    shots = None
+    if with_shots:
+        import json as _json
+        from parquet_source import load_shots_seasons
+        _idmap = _json.load(open(os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "data", "id_map.json")))
+        nba_to_espn = {v["player_id"]: int(k) for k, v in _idmap.items()
+                       if v["source"] != "synthetic"}
+        raw_shots = load_shots_seasons(years)
+        if raw_shots is not None:
+            shots = shot_quality_history(raw_shots, clean, nba_to_espn)
+            print(f"  shot quality history: {len(shots)} player-games")
 
     absence = None
     if with_absence:
@@ -91,7 +105,8 @@ def build_training_frame(years, min_games=20, with_opponent=False,
             skipped += 1
             continue
         log = to_nba_gamelog(group, player_id=int(espn_id))
-        featured = engineer_features(log, opp_history=hist, absence_history=absence)
+        featured = engineer_features(log, opp_history=hist, absence_history=absence,
+                                     shot_history=shots)
         if featured is None or len(featured) < min_games:
             skipped += 1
             continue
@@ -419,6 +434,8 @@ if __name__ == "__main__":
                     help="add leakage-free opponent-strength features")
     ap.add_argument("--with-absence", action="store_true",
                     help="add missing-teammate-minutes feature")
+    ap.add_argument("--with-shots", action="store_true",
+                    help="add shot-location quality features")
     args = ap.parse_args()
 
     from parquet_source import latest_available_season
@@ -435,16 +452,20 @@ if __name__ == "__main__":
         feature_cols += OPP_FEATURE_COLS
     if args.with_absence:
         feature_cols += ABSENCE_FEATURE_COLS
+    if args.with_shots:
+        feature_cols += SHOT_FEATURE_COLS
 
     extras = ([" opponent"] if args.with_opponent else []) + \
-             ([" absence"] if args.with_absence else [])
+             ([" absence"] if args.with_absence else []) + \
+             ([" shots"] if args.with_shots else [])
     print(f"\n[Step 1] Building training set from bulk parquet {years}")
     print(f"  features: {len(feature_cols)}"
           + (f" (incl.{','.join(extras)})" if extras else ""))
 
     pooled = build_training_frame(years, min_games=args.min_games,
                                   with_opponent=args.with_opponent,
-                                  with_absence=args.with_absence)
+                                  with_absence=args.with_absence,
+                                  with_shots=args.with_shots)
     n_players = pooled["PLAYER_ID"].nunique()
     frames = split_by_date(pooled, feature_cols=feature_cols)
 
@@ -489,6 +510,7 @@ if __name__ == "__main__":
             "n_train": len(frames[0]),
             "with_opponent": args.with_opponent,
             "with_absence": args.with_absence,
+            "with_shots": args.with_shots,
             "sklearn_version": __import__("sklearn").__version__,
         },
     )

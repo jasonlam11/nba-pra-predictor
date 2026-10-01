@@ -269,8 +269,65 @@ while the bottom quintile fell **1.5 short** — a 3.7 PRA spread.
 
 `PRA_L10` still carries ~0.5 of total importance. The model is fundamentally a
 smarter rolling average, which is why the naive baseline is hard to beat and why
-further tuning is unlikely to help. Real gains need new *signal*, not new
-hyperparameters.
+further tuning is unlikely to help.
+
+### Shot-location quality (opt-in, `--with-shots`)
+
+Built and measured, **not shipped by default**. The idea is sound: `PTS_L5`
+conflates how good a player's shots are (stable) with whether they went in
+(noisy), and scoring shots by where they were taken separates the two. In
+isolation the signal is strong — expected points beats actual recent points at
+predicting the next game (MAE 4.32 vs 4.43), and players shooting far above
+their shot quality regress ~2 points while those below bounce back ~1.9.
+
+The model agrees it is informative: `SHOT_EXP_PTS_L10` becomes the **second most
+important feature** in the points model (0.142, against `PTS_L5` at 0.039).
+
+But against the actual shipped pipeline it is worth little:
+
+| | PRA MAE |
+|---|---|
+| shipped (31 features) | 5.8790 |
+| + shot quality (36 features) | 5.8641 |
+| | **+0.0149 (t=2.70)** |
+
+Points — the stat it targets — improves by only 0.007 (t=1.5, not significant).
+
+**A measurement lesson worth recording.** A first ablation at *fixed*
+hyperparameters showed +0.076 (t=10.4), five times the real figure. Tuning the
+31-feature model closed most of that gap: the shot features were largely
+compensating for a weaker baseline, not adding independent information.
+Feature-set comparisons must be made against a pipeline tuned the same way the
+production one is, or they flatter the new feature.
+
+Not shipped because, unlike the opponent features, this is not free: it needs
+~17 MB of extra downloads per build and a game-matching step (§ below) with a
+0.6% miss rate, in exchange for a gain in the same "real but invisible" bucket
+as opponent strength.
+
+**Matching NBA shot data to ESPN box scores.** NBA game ids are not
+chronological — game `0022500009` is Christmas Day — so they cannot be ordered
+into dates, and the only sportsdataverse file carrying dates is refreshed far
+less often than the shot files, which would silently stale the feature in
+season. Games are instead matched on the pair of teams and each one's
+field-goal points (ESPN points minus free throws), a key that is unique and
+depends only on sources the daily job already refreshes: 99.4% of games matched,
+100.00% of those dates agreeing with the official record.
+
+### Datasets evaluated and rejected
+
+- **Possessions** (`nba_stats_possessions`): true pace and per-player on-floor
+  possessions. Added +0.014 on top of shot features (t=4.0) but was
+  *significantly harmful on its own* (−0.017), and the file is refreshed far
+  less often than the shot data, so it would go stale in season.
+- **Lineups** (`nba_stats_game_lineups`): per-action five-man units. The natural
+  feature — how much a player's usual lineup partners are on the floor —
+  requires a pair self-join of 1.4 billion rows per season, and overlaps
+  `TEAM_MIN_ABSENT`, which already captures availability at +0.147.
+
+Real gains need new *signal*, and the box score may simply be close to
+exhausted: three separate attempts (opponent strength, per-stat models, shot
+quality) each landed between +0.01 and +0.03 PRA.
 
 ### Leakage control
 

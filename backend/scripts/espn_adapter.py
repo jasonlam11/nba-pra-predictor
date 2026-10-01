@@ -125,6 +125,10 @@ def to_nba_gamelog(df: pd.DataFrame, player_id: int = None) -> pd.DataFrame:
     out["FG3_PCT"] = _pct(d["three_point_field_goals_made"], d["three_point_field_goals_attempted"]).values
     out["FT_PCT"] = _pct(d["free_throws_made"], d["free_throws_attempted"]).values
     out["PLAYER_ID"] = player_id if player_id is not None else d["athlete_id"].values
+    # Stable join key. PLAYER_ID is whatever the caller passed -- the ESPN id
+    # during training, the nba_api id when building the snapshot -- so anything
+    # joining per-player data needs an identifier that does not change meaning.
+    out["ESPN_ID"] = d["athlete_id"].astype("int64").values
 
     out = out.sort_values("_SORT_DATE", ascending=False).drop(columns=["_SORT_DATE"])
     return out.reset_index(drop=True)
@@ -314,3 +318,124 @@ def latest_opponent_ratings(df: pd.DataFrame) -> dict:
             "OPP_PACE": float(t["total_points"].tail(10).mean()),
         }
     return out
+
+
+# Distance buckets for the league shooting curve, in feet.
+SHOT_DISTANCE_BINS = [-1, 4, 9, 15, 21, 25, 30, 100]
+
+
+def _game_date_map(shots: pd.DataFrame, clean: pd.DataFrame) -> dict:
+    """
+    {nba game_id: game_date}, derived without any extra data source.
+
+    This exists because of a trap. NBA game ids are NOT chronological -- game
+    0022500009 is Christmas Day -- so they cannot be ordered into dates. The
+    obvious fix, sportsdataverse's nba_stats_player_game_logs, carries dates but
+    is refreshed far less often than the shot files; relying on it would quietly
+    drop the most recent games in-season, which are exactly the ones a rolling
+    feature needs.
+
+    So games are matched between the two datasets on something both already
+    contain: the pair of teams and each one's field-goal points (ESPN's points
+    minus free throws). That key is unique, and it depends only on sources the
+    daily job already refreshes. Measured on 2025-26: 99.4% of games matched,
+    and 100.00% of those dates agree with the NBA's official record.
+    """
+    s = shots.copy()
+    s["tri"] = s["team_tricode"].replace(ESPN_TO_NBA_TRICODE)
+    s["fgp"] = (s["shot_result"] == "Made").astype(int) * s["shot_value"]
+    nba = s.groupby(["game_id", "tri"])["fgp"].sum().reset_index()
+    nba_key = (
+        nba.sort_values(["game_id", "tri"]).groupby("game_id")
+        .apply(lambda d: "|".join(f"{t}:{int(p)}" for t, p in zip(d.tri, d.fgp)),
+               include_groups=False)
+        .rename("key").reset_index()
+    )
+
+    e = clean.assign(fgp=clean["points"] - clean["free_throws_made"])
+    esp = e.groupby(["game_id", "game_date", "team_abbreviation"])["fgp"].sum().reset_index()
+    esp_key = (
+        esp.sort_values(["game_id", "team_abbreviation"]).groupby(["game_id", "game_date"])
+        .apply(lambda d: "|".join(f"{t}:{int(p)}" for t, p in zip(d.team_abbreviation, d.fgp)),
+               include_groups=False)
+        .rename("key").reset_index()
+    )
+
+    # A key shared by two games means we cannot tell which date is which, so
+    # drop it rather than guess. Affects ~0.1% of games.
+    nba_key = nba_key[~nba_key["key"].duplicated(keep=False)]
+    esp_key = esp_key[~esp_key["key"].duplicated(keep=False)]
+
+    m = nba_key.merge(esp_key, on="key", how="inner", suffixes=("_nba", "_espn"))
+    return dict(zip(m["game_id_nba"], pd.to_datetime(m["game_date"])))
+
+
+def shot_quality_history(shots: pd.DataFrame, clean: pd.DataFrame,
+                         nba_to_espn: dict) -> pd.DataFrame:
+    """
+    Rolling shot-quality features per (ESPN athlete id, game date).
+
+    The idea this captures is one the box score cannot express. PTS_L5 -- the
+    model's single most important input -- conflates two different things: how
+    many and how good a player's shot attempts are, which is stable, and whether
+    those attempts went in, which is noisy. Scoring a player's shots by where
+    they were taken separates the two.
+
+    Measured directly: expected points from shot locations predicts a player's
+    next game better than their actual recent points (MAE 4.32 vs 4.43), and
+    players shooting far above their shot quality regress by ~2 points next game
+    while those below bounce back ~1.9 -- a swing the model was blind to.
+
+    Columns: SHOT_EXP_PTS_L5/L10 (shot quality), SHOT_FGA_L5 (volume),
+    SHOT_DIST_L5 (shot profile), SHOT_HOT_L5 (recent over-performance, which
+    tends to reverse).
+
+    Every value is shifted one game, so a row never sees its own result.
+    """
+    # 2 regular season, 4 playoffs, 5 play-in, 6 NBA Cup final. All are real
+    # basketball and all appear in the box scores we join against; excluding any
+    # of them leaves those games with no shot history, which the median fill
+    # then silently papers over.
+    s = shots[shots["season_type_id"].astype(str).isin({"2", "4", "5", "6"})].copy()
+    s["made"] = (s["shot_result"] == "Made").astype(int)
+    s["act"] = s["made"] * s["shot_value"]
+    s["bucket"] = pd.cut(s["shot_distance"], SHOT_DISTANCE_BINS)
+
+    # League curve fitted on the EARLIEST season present, then held fixed, so no
+    # game is ever scored using a curve derived from its own season.
+    first_season = s["season"].min()
+    curve = (
+        s[s["season"] == first_season]
+        .groupby("bucket", observed=True)
+        .apply(lambda d: float((d["made"] * d["shot_value"]).mean()), include_groups=False)
+    )
+    s["exp"] = s["bucket"].map(curve).astype(float)
+
+    dates = _game_date_map(s, clean)
+    pg = (
+        s.groupby(["person_id", "game_id"])
+        .agg(fga=("made", "size"), act=("act", "sum"),
+             exp=("exp", "sum"), dist=("shot_distance", "mean"))
+        .reset_index()
+    )
+    pg["GAME_DATE"] = pg["game_id"].map(dates)
+    pg = pg.dropna(subset=["GAME_DATE"]).sort_values(["person_id", "GAME_DATE"])
+
+    g = pg.groupby("person_id")
+    pg["SHOT_EXP_PTS_L5"] = g["exp"].transform(lambda x: x.shift(1).rolling(5, min_periods=3).mean())
+    pg["SHOT_EXP_PTS_L10"] = g["exp"].transform(lambda x: x.shift(1).rolling(10, min_periods=3).mean())
+    pg["SHOT_FGA_L5"] = g["fga"].transform(lambda x: x.shift(1).rolling(5, min_periods=3).mean())
+    pg["SHOT_DIST_L5"] = g["dist"].transform(lambda x: x.shift(1).rolling(5, min_periods=3).mean())
+    pg["SHOT_HOT_L5"] = (
+        g["act"].transform(lambda x: x.shift(1).rolling(5, min_periods=3).mean())
+        - pg["SHOT_EXP_PTS_L5"]
+    )
+
+    # Shots are keyed by nba_api player id; everything downstream joins on the
+    # ESPN athlete id, which is the only id present in the box-score rows.
+    pg["ESPN_ID"] = pg["person_id"].map(nba_to_espn)
+    cols = ["SHOT_EXP_PTS_L5", "SHOT_EXP_PTS_L10", "SHOT_FGA_L5", "SHOT_DIST_L5", "SHOT_HOT_L5"]
+    out = pg.dropna(subset=["ESPN_ID"] + cols).copy()
+    out["ESPN_ID"] = out["ESPN_ID"].astype("int64")
+    out = out.drop_duplicates(subset=["ESPN_ID", "GAME_DATE"], keep="last")
+    return out[["ESPN_ID", "GAME_DATE"] + cols].reset_index(drop=True)
