@@ -206,7 +206,16 @@ def archive_injury_report(report: dict, absent_by_team: dict, players: dict,
     so a future backtest can join logged pre-game state against what really
     happened, without having to reconstruct the feature from scratch.
 
-    One immutable file per day rather than one growing file: git stores a new
+    Files are named `YYYY-MM-DDTHH.json` in UTC, one per capture rather than one
+    per day. The job runs twice daily, and the two captures are not equivalent:
+    the morning one is taken ~16 hours before tip-off, the evening one shortly
+    before it, by which point questionable players have usually been ruled in or
+    out. Collapsing them to one file per day would discard exactly the
+    difference worth studying -- how much the report firms up as a game
+    approaches, and therefore how much of the absence signal is actually
+    knowable at prediction time.
+
+    One immutable file per capture rather than one growing file: git stores a new
     blob for every version of a file it sees, so appending to a single JSONL
     would re-store the entire history daily (~700 MB/year). Separate small files
     cost a few KB each.
@@ -243,8 +252,10 @@ def archive_injury_report(report: dict, absent_by_team: dict, players: dict,
     # reports for what is effectively the same day, or overwrite the wrong one.
     now = datetime.now(timezone.utc)
     day = now.strftime("%Y-%m-%d")
+    slot = now.strftime("%Y-%m-%dT%H")
     payload = {
         "date": day,
+        "captured_hour_utc": now.hour,
         "captured_at": now.isoformat(timespec="seconds"),
         "source": "site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
         "source_timestamp": report.get("timestamp", ""),
@@ -258,13 +269,13 @@ def archive_injury_report(report: dict, absent_by_team: dict, players: dict,
         },
     }
 
-    path = os.path.join(out_dir, f"{day}.json")
+    path = os.path.join(out_dir, f"{slot}.json")
     tmp = path + ".tmp"
     with open(tmp, "w") as fh:
         json.dump(payload, fh, indent=1, sort_keys=False)
         fh.write("\n")
     os.replace(tmp, path)
-    print(f"      injury archive: {len(entries)} entries -> data/injuries/{day}.json")
+    print(f"      injury archive: {len(entries)} entries -> data/injuries/{slot}.json")
     return path
 
 

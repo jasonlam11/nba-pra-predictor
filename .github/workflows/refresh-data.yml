@@ -11,8 +11,21 @@ name: Refresh data snapshot
 
 on:
   schedule:
-    # 06:30 UTC — after sportsdataverse publishes its daily update (~05:00 UTC).
-    - cron: "30 6 * * *"
+    # Twice daily, and the second run is not just a repeat.
+    #
+    # 06:30 UTC (~02:30 ET) — after sportsdataverse publishes its daily update
+    #   (~05:00 UTC), so this is the run that picks up last night's box scores.
+    #
+    # 22:30 UTC (~18:30 ET) — shortly before the evening tip-offs. The bulk box
+    #   scores have not changed, but the injury report has: by early evening
+    #   most questionable players have been ruled in or out. Rebuilding here
+    #   refreshes TEAM_MIN_ABSENT with far better information than the small
+    #   hours, so tonight's predictions improve -- and it captures a second,
+    #   more decision-relevant injury snapshot for the archive.
+    #
+    # Scheduled runs are often delayed under load; a late evening run still
+    # lands well before most tip-offs.
+    - cron: "30 6,22 * * *"
   workflow_dispatch:
 
 permissions:
@@ -70,7 +83,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "nothing to commit"
           else
-            git commit -m "chore: refresh id map and archive injury report ($(date -u +%Y-%m-%d))"
+            git commit -m "chore: refresh id map and archive injury report ($(date -u +%Y-%m-%dT%H)Z)"
             # Another run may have pushed since checkout; rebase rather than fail.
             git pull --rebase --autostash origin main
             git push

@@ -1,8 +1,9 @@
 {
  "date": "2026-10-01",
- "captured_at": "2026-10-01T01:22:03+00:00",
+ "captured_hour_utc": 1,
+ "captured_at": "2026-10-01T01:39:14+00:00",
  "source": "site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
- "source_timestamp": "2026-10-01T01:21:59Z",
+ "source_timestamp": "2026-10-01T01:39:08Z",
  "absent_statuses": [
   "doubtful",
   "out"

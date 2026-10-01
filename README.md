@@ -116,9 +116,14 @@ report (Out/Doubtful only), which is noisier, so the real-world gain is smaller
 than +0.18.
 
 It could not be backtested, because ESPN serves only the current report. So the
-daily job now archives one to `backend/data/injuries/` every day, including the
-exact feature value given to the model. After a few months that becomes
-measurable — see `backend/data/injuries/README.md`.
+job now archives one to `backend/data/injuries/` twice a day — morning and
+shortly before tip-off — including the exact feature value given to the model.
+After a few months that becomes measurable; see
+`backend/data/injuries/README.md`.
+
+The evening run is not just logging: it rebuilds the snapshot with near-final
+injury information, so tonight's predictions use a better `TEAM_MIN_ABSENT` than
+the small-hours run could produce.
 
 ## Verification scripts
 

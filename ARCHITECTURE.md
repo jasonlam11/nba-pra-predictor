@@ -296,19 +296,26 @@ scratches never appear. **So the production gain is smaller than +0.18 PRA, and
 it cannot be backtested** — ESPN serves only the current injury report, with no
 history. Treat +0.18 as an upper bound.
 
-**This is now being measured.** The daily job archives each day's injury report
-to `backend/data/injuries/YYYY-MM-DD.json` (UTC), recording both the raw report
-and `team_absent_minutes` — the exact feature value fed to the model that day,
-not a reconstruction. Archiving started 2026-10-01.
+**This is now being measured.** The daily job archives the injury report to
+`backend/data/injuries/YYYY-MM-DDTHH.json` (UTC), recording both the raw report
+and `team_absent_minutes` — the exact feature value fed to the model, not a
+reconstruction. Archiving started 2026-10-01.
+
+The job runs **twice daily** (~06:30 and ~22:30 UTC) and the two captures differ
+in kind: the evening one is taken shortly before tip-off, once questionable
+players have been ruled in or out. That also means the evening rebuild serves
+*better predictions*, since `TEAM_MIN_ABSENT` is refreshed with near-final
+information rather than the small hours' guesswork.
 
 After roughly 40–60 game days, retraining with the *logged predicted* absence in
 place of the actual absence gives the feature's true production value, replacing
 the +0.18 upper bound with a real number. `backend/data/injuries/README.md` has
 the procedure.
 
-One file per UTC day rather than one growing file: git stores a new blob for
-every version of a file it sees, so appending to a single JSONL would re-store
-the whole history daily (~700 MB/year) instead of a few KB.
+One immutable file per capture rather than one growing file: git stores a new
+blob for every version of a file it sees, so appending to a single JSONL would
+re-store the whole history on every run (~1.4 GB/year at two runs a day) instead
+of ~16 KB.
 
 ### Prediction mechanics
 
@@ -525,7 +532,7 @@ The builder only computes a feature history when the loaded model's
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `refresh-data.yml` | daily 06:30 UTC + manual | rebuild snapshot, publish release asset |
+| `refresh-data.yml` | 06:30 and 22:30 UTC + manual | rebuild snapshot, archive injury report, publish release asset |
 | `train-model.yml` | monthly + manual | train a candidate, upload artifact (does **not** auto-publish) |
 | `ci.yml` | every push / PR | build a real snapshot, run both check scripts, guard serving weight, `tsc` + `next build` |
 
