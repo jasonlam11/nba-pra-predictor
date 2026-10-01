@@ -44,13 +44,19 @@ Vercel (free tier)
 
 ## Running locally
 
-**Backend** (Python 3.9+):
+**Backend** — requires **Python 3.9–3.12**.
+
+> Not 3.13: `numpy==2.0.2` has no CPython 3.13 wheel, so `pip install` fails
+> outright. The pin is deliberate (it is the version model artifacts are built
+> and validated against); if you need 3.13, bump numpy and re-run
+> `scripts/check_parity.py` and `scripts/check_offline.py` to confirm nothing
+> shifted. Verified working on 3.9, 3.10, 3.11 and 3.12.
 
 ```bash
 cd backend
-python -m venv venv && source venv/bin/activate
+python3 -m venv venv && source venv/bin/activate
 pip install -r requirements-data.txt      # serving deps + the data job's extras
-python scripts/build_snapshot.py          # builds data/snapshot.db, ~15s
+python scripts/build_snapshot.py          # builds data/snapshot.db, ~20s
 uvicorn app.main:app --reload --port 8000
 ```
 
