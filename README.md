@@ -113,7 +113,12 @@ by −1.5.
 **Caveat on that number.** Training measures absence as "did not play", which is
 only knowable after tip-off. In production the daily job substitutes the injury
 report (Out/Doubtful only), which is noisier, so the real-world gain is smaller
-than +0.18 and cannot be backtested — ESPN serves only the current report.
+than +0.18.
+
+It could not be backtested, because ESPN serves only the current report. So the
+daily job now archives one to `backend/data/injuries/` every day, including the
+exact feature value given to the model. After a few months that becomes
+measurable — see `backend/data/injuries/README.md`.
 
 ## Verification scripts
 

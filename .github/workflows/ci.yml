@@ -33,7 +33,9 @@ jobs:
 
       - name: Build a snapshot
         working-directory: backend
-        run: python scripts/build_snapshot.py --out data/snapshot.db
+        # --no-archive: this is a test build, not the daily job. Only
+        # refresh-data.yml should write to the permanent injury archive.
+        run: python scripts/build_snapshot.py --out data/snapshot.db --no-archive
 
       - name: Prove the request path makes no network calls
         working-directory: backend

@@ -55,11 +55,23 @@ jobs:
             || true
           gh release upload data-snapshot backend/data/snapshot.db --clobber
 
-      - name: Commit refreshed id map
+      - name: Commit id map and archive today's injury report
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add backend/data/id_map.json
+
           # The id map is small and text; committing it makes ID churn reviewable.
-          git diff --cached --quiet || git commit -m "chore: refresh player id map"
-          git push
+          # The injury archive is the whole point of this step: ESPN keeps no
+          # history, so unless each day's report is committed the moment it is
+          # fetched, it is gone. Without it the TEAM_MIN_ABSENT feature can never
+          # be validated against production conditions.
+          git add backend/data/id_map.json backend/data/injuries/
+
+          if git diff --cached --quiet; then
+            echo "nothing to commit"
+          else
+            git commit -m "chore: refresh id map and archive injury report ($(date -u +%Y-%m-%d))"
+            # Another run may have pushed since checkout; rebase rather than fail.
+            git pull --rebase --autostash origin main
+            git push
+          fi

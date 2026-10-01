@@ -19,7 +19,7 @@ import os
 import pickle
 import sqlite3
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -186,6 +186,86 @@ def expected_minutes(clean: pd.DataFrame) -> dict:
 
 
 ABSENT_STATUSES = {"out", "doubtful"}
+
+INJURY_ARCHIVE_DIR = os.path.join(HERE, "..", "data", "injuries")
+
+
+def archive_injury_report(report: dict, absent_by_team: dict, players: dict,
+                          exp_minutes: dict, out_dir: str = None) -> str:
+    """
+    Append today's injury report to a permanent per-day archive.
+
+    This exists to make one specific measurement possible later. The
+    TEAM_MIN_ABSENT feature was trained on who *did not play*, which is only
+    knowable after tip-off; in production it is inferred from this report
+    instead. How much accuracy that proxy costs cannot be backtested, because
+    ESPN serves only the current report and keeps no history.
+
+    So we build the history ourselves. Each day's file records both the raw
+    report AND the derived per-team absent minutes actually fed to the model --
+    so a future backtest can join logged pre-game state against what really
+    happened, without having to reconstruct the feature from scratch.
+
+    One immutable file per day rather than one growing file: git stores a new
+    blob for every version of a file it sees, so appending to a single JSONL
+    would re-store the entire history daily (~700 MB/year). Separate small files
+    cost a few KB each.
+
+    Returns the path written, or None if there was nothing worth recording.
+    """
+    if not report or not report.get("entries"):
+        # Never write an empty day. A failed fetch would otherwise be
+        # indistinguishable from "nobody was injured", which is worse than a gap.
+        print("      injury archive: skipped (no entries to record)")
+        return None
+
+    out_dir = out_dir or INJURY_ARCHIVE_DIR
+    os.makedirs(out_dir, exist_ok=True)
+
+    by_espn_name = {}
+    for row in players.values():
+        by_espn_name[row[2].lower()] = row[1]   # full_name -> espn_id
+
+    entries = []
+    for e in report["entries"]:
+        espn_id = by_espn_name.get(e["name"].lower())
+        entries.append({
+            **e,
+            "espn_id": int(espn_id) if espn_id is not None else None,
+            # Minutes this player had been averaging when the report was taken.
+            # Recorded now because it is cheap; recomputing it later means
+            # rebuilding rolling averages as of this exact date.
+            "expected_minutes": round(float(exp_minutes.get(espn_id, 0.0) or 0.0), 1),
+        })
+
+    # UTC, not local time. CI runs at 06:30 UTC while a developer might run this
+    # at 21:00 PT the previous calendar day -- using local dates would file two
+    # reports for what is effectively the same day, or overwrite the wrong one.
+    now = datetime.now(timezone.utc)
+    day = now.strftime("%Y-%m-%d")
+    payload = {
+        "date": day,
+        "captured_at": now.isoformat(timespec="seconds"),
+        "source": "site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+        "source_timestamp": report.get("timestamp", ""),
+        "absent_statuses": sorted(ABSENT_STATUSES),
+        "n_entries": len(entries),
+        "entries": entries,
+        # The exact feature value the model was given today, keyed by nba_api
+        # team id, so a backtest does not have to re-derive it.
+        "team_absent_minutes": {
+            str(tid): v["minutes"] for tid, v in sorted(absent_by_team.items())
+        },
+    }
+
+    path = os.path.join(out_dir, f"{day}.json")
+    tmp = path + ".tmp"
+    with open(tmp, "w") as fh:
+        json.dump(payload, fh, indent=1, sort_keys=False)
+        fh.write("\n")
+    os.replace(tmp, path)
+    print(f"      injury archive: {len(entries)} entries -> data/injuries/{day}.json")
+    return path
 
 
 def absence_from_injuries(players: dict, injuries: dict, exp_minutes: dict) -> dict:
@@ -408,6 +488,8 @@ def main():
     ap.add_argument("--out", default=DEFAULT_OUT)
     ap.add_argument("--seasons", type=int, default=2,
                     help="how many seasons of history to include")
+    ap.add_argument("--no-archive", action="store_true",
+                    help="skip writing today's injury report to data/injuries/")
     args = ap.parse_args()
 
     started = datetime.now()
@@ -437,7 +519,11 @@ def main():
     # Look ahead far enough to find a real next game even across an off day,
     # the All-Star break, or (as when this was built) the preseason gap.
     games_raw = espn_live.fetch_upcoming(days=LOOKAHEAD_DAYS)
-    injuries = espn_live.fetch_injuries()
+    injury_report = espn_live.fetch_injury_report()
+    injuries = {
+        e["name"].lower(): {"status": e["status"], "description": e["description"]}
+        for e in (injury_report or {}).get("entries", [])
+    }
     today = started.strftime("%Y-%m-%d")
     n_today = sum(1 for g in games_raw if (g.get("start_time") or "")[:10] == today)
     print(f"      {len(games_raw)} games in next {LOOKAHEAD_DAYS}d "
@@ -476,10 +562,12 @@ def main():
         absence_hist = team_absence_history(clean)
         print(f"      absence history:  {len(absence_hist)} team-games")
 
-    absent_by_team = absence_from_injuries(
-        players, injuries, expected_minutes(clean)
-    )
+    exp_minutes = expected_minutes(clean)
+    absent_by_team = absence_from_injuries(players, injuries, exp_minutes)
     print(f"      teams with players out tonight: {len(absent_by_team)}")
+
+    if not args.no_archive:
+        archive_injury_report(injury_report, absent_by_team, players, exp_minutes)
 
     ctx_by_team = next_game_context(games_raw, teams)
     pred_rows, log_rows, skipped = build_predictions(

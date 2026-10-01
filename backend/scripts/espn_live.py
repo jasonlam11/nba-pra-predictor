@@ -16,6 +16,8 @@ from datetime import datetime, timedelta
 
 import requests
 
+from espn_adapter import ESPN_TO_NBA_TRICODE
+
 SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"
 INJURIES_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries"
 
@@ -116,28 +118,59 @@ def fetch_upcoming(days: int = 2) -> list:
     return out
 
 
-def fetch_injuries() -> dict:
+def fetch_injury_report() -> dict:
     """
-    {player_name_lower: {status, description}} — same shape and same filtering
-    as the old in-process fetch in main.py, so /injuries is unchanged.
+    The full injury report, structured for both serving and archiving.
+
+    Returns {"timestamp": str, "entries": [...]} or None if the feed is
+    unavailable. Each entry carries name, team tricode (translated to NBA form),
+    status, ESPN's normalized status code, injury type and the date it was
+    first reported.
+
+    Note ESPN does NOT populate `athlete.id` in this feed -- it is null for
+    every entry -- so players can only be matched by name. That is why
+    absence_from_injuries joins on a lowercased display name rather than an id.
     """
     try:
         raw = _get_json(INJURIES_URL)
     except Exception as e:
         print(f"  injuries unavailable ({type(e).__name__}: {e})")
-        return {}
+        return None
 
-    result = {}
+    entries = []
     for team_entry in raw.get("injuries", []):
         for inj in team_entry.get("injuries", []):
-            name = inj.get("athlete", {}).get("displayName", "")
+            athlete = inj.get("athlete") or {}
+            name = athlete.get("displayName", "")
             status = inj.get("status", "")
             # Only real injury statuses — "Active" means available.
             if not name or not status or status.lower() in ("active", ""):
                 continue
+
+            team = (athlete.get("team") or {}).get("abbreviation") or ""
             details = inj.get("details") or {}
-            result[name.lower()] = {
+            entries.append({
+                "name": name,
+                "team": ESPN_TO_NBA_TRICODE.get(team, team),
                 "status": status,
+                "status_code": (inj.get("type") or {}).get("name", ""),
                 "description": details.get("type") or status,
-            }
-    return result
+                "reported": inj.get("date", ""),
+            })
+
+    return {"timestamp": raw.get("timestamp", ""), "entries": entries}
+
+
+def fetch_injuries() -> dict:
+    """
+    {player_name_lower: {status, description}} — the shape the API serves.
+
+    Derived from fetch_injury_report so there is one parser and one request.
+    """
+    report = fetch_injury_report()
+    if not report:
+        return {}
+    return {
+        e["name"].lower(): {"status": e["status"], "description": e["description"]}
+        for e in report["entries"]
+    }

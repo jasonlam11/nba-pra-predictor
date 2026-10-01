@@ -140,7 +140,9 @@ not crash looking for a file upstream has not created yet.
 **2 — Build the ID map.** See §5.
 
 **3 — Fetch schedule and injuries** from ESPN, looking 8 days ahead so a
-prediction still has a matchup across an off day or the All-Star break.
+prediction still has a matchup across an off day or the All-Star break. Today's
+injury report is also archived permanently (§6) — ESPN keeps no history, so a
+report not saved when fetched is gone.
 
 **4 — Compute team defense ratings** from the same box scores already in hand.
 
@@ -294,8 +296,19 @@ scratches never appear. **So the production gain is smaller than +0.18 PRA, and
 it cannot be backtested** — ESPN serves only the current injury report, with no
 history. Treat +0.18 as an upper bound.
 
-The only way to learn the real number is to start logging the daily injury
-report now and backtest in a few months against what accumulates.
+**This is now being measured.** The daily job archives each day's injury report
+to `backend/data/injuries/YYYY-MM-DD.json` (UTC), recording both the raw report
+and `team_absent_minutes` — the exact feature value fed to the model that day,
+not a reconstruction. Archiving started 2026-10-01.
+
+After roughly 40–60 game days, retraining with the *logged predicted* absence in
+place of the actual absence gives the feature's true production value, replacing
+the +0.18 upper bound with a real number. `backend/data/injuries/README.md` has
+the procedure.
+
+One file per UTC day rather than one growing file: git stores a new blob for
+every version of a file it sees, so appending to a single JSONL would re-store
+the whole history daily (~700 MB/year) instead of a few KB.
 
 ### Prediction mechanics
 
@@ -527,7 +540,8 @@ Scheduled workflows only run from the **default branch**.
   "data · <date>" and flips to "stale data" past the threshold rather than
   implying live.
 - **Live parity unverified** (§9).
-- **Absence proxy unmeasured in production** (§6).
+- **Absence proxy unmeasured in production** (§6) — now accumulating the data
+  needed to measure it.
 - **Third-party upstream.** If sportsdataverse stops publishing, the app degrades
   to stale data rather than breaking. ESPN's gamelog endpoint is an independent
   fallback.
