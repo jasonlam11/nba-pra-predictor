@@ -23,6 +23,23 @@ function getModelPrediction(prediction: Prediction, stat: StatType): number {
   return prediction.assists;
 }
 
+/**
+ * Typical model error for the selected stat.
+ *
+ * Only meaningful now that each stat has its own model. It is the honest
+ * counterweight to a precise-looking projection: when the gap to the line is
+ * well inside the error bar, the pick is close to a coin flip, and the UI
+ * should say so rather than implying 22.8 is a confident call against 22.5.
+ */
+function getStatError(prediction: Prediction, stat: StatType): number | null {
+  const e = prediction.stat_error;
+  if (!e) return null;
+  if (stat === "pra") return e.total_pra;
+  if (stat === "pts") return e.points;
+  if (stat === "reb") return e.rebounds;
+  return e.assists;
+}
+
 function getStatValue(game: GameLog, stat: StatType): number {
   if (stat === "pra") return game.points + game.rebounds + game.assists;
   if (stat === "pts") return game.points;
@@ -56,6 +73,9 @@ export default function PropLineAnalyzer({
   const modelPred = getModelPrediction(prediction, selectedStat);
   const isOver = modelPred > line;
   const diff = Math.abs(modelPred - line);
+  const statError = getStatError(prediction, selectedStat);
+  // A gap smaller than half the typical error is not a meaningful edge.
+  const tooCloseToCall = statError !== null && diff < statError * 0.5;
 
   const hits = last20Games.filter(
     (g) => getStatValue(g, selectedStat) > line
@@ -130,6 +150,11 @@ export default function PropLineAnalyzer({
           </p>
           <p className={`stat-number text-3xl font-bold ${verdictColor}`}>
             {modelPred.toFixed(1)}
+            {statError !== null && (
+              <span className="text-dust text-base font-mono font-normal ml-2">
+                ± {statError.toFixed(1)}
+              </span>
+            )}
           </p>
         </div>
         <div className="text-right">
@@ -137,6 +162,11 @@ export default function PropLineAnalyzer({
             {isOver ? "▲ OVER" : "▼ UNDER"}
           </p>
           <p className="text-dust text-sm">by {diff.toFixed(1)}</p>
+          {tooCloseToCall && (
+            <p className="text-dust text-[11px] mt-0.5" title="The gap to the line is well inside the model's typical error.">
+              within margin of error
+            </p>
+          )}
         </div>
       </div>
 

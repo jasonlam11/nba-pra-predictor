@@ -205,9 +205,7 @@ def make_prediction(
         }
 
     try:
-        model        = model_data["model"]
         feature_cols = model_data.get("feature_cols", FEATURE_COLS)
-        val_mae      = model_data.get("val_mae", 6.0)
 
         # Engineer features from the full log
         featured = engineer_features(
@@ -234,28 +232,68 @@ def make_prediction(
 
         X = last_row[feature_cols]
 
-        predicted_pra = float(model.predict(X)[0])
-        predicted_pra = max(predicted_pra, 0)
+        models = model_data.get("models")
+        if models:
+            # One model per stat. Each number is its own forecast rather than a
+            # share of a PRA total, so a player whose assists spike while his
+            # scoring holds steady is represented correctly.
+            pts = max(float(models["PTS"].predict(X)[0]), 0.0)
+            reb = max(float(models["REB"].predict(X)[0]), 0.0)
+            ast = max(float(models["AST"].predict(X)[0]), 0.0)
 
-        # Distribute PRA using player's season ratios
-        season_total = season["points"] + season["rebounds"] + season["assists"]
-        if season_total > 0:
-            pts_ratio = season["points"]   / season_total
-            reb_ratio = season["rebounds"] / season_total
-            ast_ratio = season["assists"]  / season_total
+            if model_data.get("pra_source") == "model" and "PRA" in models:
+                total = max(float(models["PRA"].predict(X)[0]), 0.0)
+            else:
+                total = pts + reb + ast
+
+            metrics = model_data.get("metrics", {})
+            val_mae = float(
+                metrics.get("PRA", {}).get("val_mae")
+                or sum(metrics.get(t, {}).get("val_mae", 2.0)
+                       for t in ("PTS", "REB", "AST"))
+            )
+            # Per-stat error, which only exists because each stat has its own
+            # model. Under the old ratio split there was no independent error
+            # figure for points or rebounds -- just the PRA error, which says
+            # nothing about how far off an individual line might be.
+            stat_error = {
+                "points": metrics.get("PTS", {}).get("test_mae"),
+                "rebounds": metrics.get("REB", {}).get("test_mae"),
+                "assists": metrics.get("AST", {}).get("test_mae"),
+                "total_pra": metrics.get("PRA", {}).get("sum_test_mae")
+                             or metrics.get("PRA", {}).get("test_mae"),
+            }
         else:
-            pts_ratio, reb_ratio, ast_ratio = 0.6, 0.2, 0.2
+            # Legacy single-PRA artifact: split the total by season ratios.
+            stat_error = None
+            model = model_data["model"]
+            val_mae = model_data.get("val_mae", 6.0)
+            total = max(float(model.predict(X)[0]), 0.0)
 
-        # Confidence: tighter when model error is small relative to predicted PRA
-        confidence = max(50, min(90, int(75 - (val_mae / max(predicted_pra, 1)) * 100)))
+            season_total = season["points"] + season["rebounds"] + season["assists"]
+            if season_total > 0:
+                pts = total * season["points"] / season_total
+                reb = total * season["rebounds"] / season_total
+                ast = total * season["assists"] / season_total
+            else:
+                pts, reb, ast = total * 0.6, total * 0.2, total * 0.2
 
-        return {
-            "points":    round(predicted_pra * pts_ratio, 1),
-            "rebounds":  round(predicted_pra * reb_ratio, 1),
-            "assists":   round(predicted_pra * ast_ratio, 1),
-            "total_pra": round(predicted_pra, 1),
+        # Confidence: tighter when model error is small relative to the total
+        confidence = max(50, min(90, int(75 - (val_mae / max(total, 1)) * 100)))
+
+        result = {
+            "points":    round(pts, 1),
+            "rebounds":  round(reb, 1),
+            "assists":   round(ast, 1),
+            "total_pra": round(total, 1),
             "confidence": confidence,
         }
+        if stat_error:
+            result["stat_error"] = {
+                k: (round(v, 2) if v is not None else None)
+                for k, v in stat_error.items()
+            }
+        return result
 
     except Exception as e:
         print(f"Prediction error: {e}")

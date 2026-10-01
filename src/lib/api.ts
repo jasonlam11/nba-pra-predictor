@@ -27,6 +27,17 @@ export interface Prediction {
     assists: number;
     total_pra: number;
     confidence: number;
+    /**
+     * Typical error for each stat, from the held-out test set. Only present for
+     * models that predict each stat separately — under the old ratio split
+     * there was no independent error figure for points or rebounds.
+     */
+    stat_error?: {
+        points: number | null;
+        rebounds: number | null;
+        assists: number | null;
+        total_pra: number | null;
+    };
 }
 
 export interface Reason {

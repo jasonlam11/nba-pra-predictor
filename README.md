@@ -82,8 +82,19 @@ keeps the winner — so the saved artifact is not necessarily XGBoost. Check
 `model_type` in the pickle. Promote a candidate by replacing
 `models/pra_model.pkl`, then rebuild the snapshot.
 
-Current model: XGBoost, 31 features, ~705 players / ~110k player-games, test MAE
-**5.88** PRA against a last-5-average baseline of **6.45**.
+Current model: **three XGBoost models** (points, rebounds, assists), 31 features,
+~705 players / ~110k player-games. PRA is their sum.
+
+| target | test MAE | L5 baseline |
+|---|---|---|
+| PTS | 4.49 | 4.90 |
+| REB | 1.87 | 2.03 |
+| AST | 1.34 | 1.38 |
+| **PRA** (sum) | **5.88** | **6.45** |
+
+Summing the three matches a dedicated PRA model (5.879 vs 5.881), so the split
+costs nothing in total accuracy while keeping the headline consistent with its
+own components.
 
 Feature-set ablation, identical split and hyperparameters, 16,600 test rows:
 

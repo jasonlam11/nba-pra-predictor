@@ -219,8 +219,21 @@ Trained by `scripts/train_model.py`. Despite the file's history it is not
 necessarily XGBoost — it compares Ridge, RandomForest and XGBoost and keeps
 whichever wins on validation. Check `model_type` in the pickle.
 
-**Current: XGBoost, 31 features, ~705 players / ~110k player-games.**
-Test MAE **5.88** against a last-5-game-average baseline of **6.45**.
+**Current: three XGBoost models — points, rebounds, assists — on 31 features,
+~705 players / ~110k player-games.** PRA is their sum.
+
+| target | test MAE | L5 baseline | gain |
+|---|---|---|---|
+| PTS | 4.49 | 4.90 | +0.41 |
+| REB | 1.87 | 2.03 | +0.16 |
+| AST | 1.34 | 1.38 | +0.05 |
+| **PRA** (sum) | **5.88** | **6.45** | **+0.57** |
+
+A dedicated PRA model was trained alongside purely to settle how the total
+should be produced. Summing the three components scored 5.879 against 5.881 for
+the direct model — indistinguishable — so the sum wins, because a headline PRA
+that disagrees with the three numbers printed beside it would have to earn that
+inconsistency, and it cannot.
 
 ### Features
 
@@ -286,10 +299,35 @@ report now and backtest in a few months against what accumulates.
 
 ### Prediction mechanics
 
-The model predicts a **single PRA scalar**. The PTS/REB/AST shown in the UI are
-that total split by the player's season ratios — they are derived, not
-independently forecast. Splitting into three models is the largest remaining
-modelling improvement available.
+Each stat is predicted by its own model. PRA is the sum, so the headline figure
+is always exactly the three component numbers added together.
+
+**Honest note on what that bought.** Splitting into three models was expected to
+be a significant accuracy win. Measured against the old approach — predict PRA,
+then split by the player's season ratios — it was not:
+
+| stat | ratio-split | dedicated model | gain |
+|---|---|---|---|
+| PTS | 4.500 | 4.493 | +0.008 (t=1, not significant) |
+| REB | 1.885 | 1.869 | +0.017 (0.9%, t=4) |
+| AST | 1.345 | 1.336 | +0.010 (0.7%, t=3) |
+
+The ratio split was already close to optimal, because a player's scoring /
+rebounding / assist mix is genuinely stable game to game, and the PRA model
+already captured the overall level. The split is kept for three reasons that are
+not accuracy:
+
+1. **Per-stat error bars become possible.** Under the ratio split there was no
+   independent error figure for points — only the PRA error, which says nothing
+   about how far off an individual line might be. The UI now shows `± 4.5` on a
+   points projection and flags "within margin of error" when the gap to the line
+   is inside half of it.
+2. **The product stops claiming something untrue.** The three numbers are now
+   forecasts rather than a single number cut into shares.
+3. **Stat-specific signal becomes exploitable.** `OPP_REB_ALLOWED` can only ever
+   help a rebounds model; under the ratio split it had nowhere to act.
+
+PRA accuracy is unchanged either way, so none of this costs anything.
 
 `make_prediction` builds the feature row for **tonight's** game: `IS_HOME` and
 `DAYS_REST` come from the schedule, and opponent strength and absent minutes are
@@ -490,7 +528,6 @@ Scheduled workflows only run from the **default branch**.
   implying live.
 - **Live parity unverified** (§9).
 - **Absence proxy unmeasured in production** (§6).
-- **PTS/REB/AST are derived**, not independently predicted (§6).
 - **Third-party upstream.** If sportsdataverse stops publishing, the app degrades
   to stale data rather than breaking. ESPN's gamelog endpoint is an independent
   fallback.

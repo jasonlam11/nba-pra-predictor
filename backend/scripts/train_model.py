@@ -131,19 +131,19 @@ def split_by_date(pooled: pd.DataFrame, feature_cols=None, train_frac=0.70, val_
     va = pooled[(dates > train_cut) & (dates <= val_cut)]
     te = pooled[dates > val_cut]
 
-    cols = feature_cols or FEATURE_COLS
-
-    def xy(d):
-        return d[cols], d["PRA"]
-
     print(f"\n  Train: {len(tr)} rows  (through {train_cut.date()})")
     print(f"  Val  : {len(va)} rows  ({train_cut.date()} -> {val_cut.date()})")
     print(f"  Test : {len(te)} rows  (after {val_cut.date()})")
+    return tr, va, te
 
-    X_train, y_train = xy(tr)
-    X_val, y_val = xy(va)
-    X_test, y_test = xy(te)
-    return X_train, y_train, X_val, y_val, X_test, y_test
+
+def xy(frames, feature_cols, target):
+    """(X, y) per split for one target column -- PTS, REB, AST or PRA."""
+    cols = feature_cols or FEATURE_COLS
+    out = []
+    for d in frames:
+        out.extend([d[cols], d[target]])
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -162,9 +162,10 @@ def report(name, y_true, y_pred):
 # Step 3 — Baseline
 # ---------------------------------------------------------------------------
 
-def evaluate_baseline(X_val, y_val):
-    print("\n[Step 3] Baseline — predict PRA_L5 rolling average")
-    preds = X_val["PRA_L5"].values
+def evaluate_baseline(X_val, y_val, target="PRA"):
+    """Naive comparison: predict the player's own 5-game average of that stat."""
+    print(f"\n  Baseline — predict {target}_L5 rolling average")
+    preds = X_val[f"{target}_L5"].values
     return report("Baseline (L5 avg)", y_val, preds)
 
 
@@ -313,43 +314,94 @@ def final_model(X_train, y_train, X_val, y_val, X_test, y_test, best_params):
 
 
 # ---------------------------------------------------------------------------
+# Train one target end to end
+# ---------------------------------------------------------------------------
+
+def train_target(target, frames, feature_cols):
+    """
+    Full pipeline for a single stat. Returns (model, metrics, params).
+
+    Each of PTS / REB / AST gets its own model rather than being carved out of a
+    PRA prediction by season ratios. Ratios assume a player's mix is constant,
+    which is exactly wrong in the cases that matter -- a guard whose assists
+    spike when the primary ball-handler sits keeps the same split under the old
+    approach.
+    """
+    print("\n" + "=" * 60)
+    print(f"TARGET: {target}")
+    print("=" * 60)
+
+    X_train, y_train, X_val, y_val, X_test, y_test = xy(frames, feature_cols, target)
+
+    baseline_mae, _, _ = evaluate_baseline(X_val, y_val, target)
+    results, best_name = compare_models(X_train, y_train, X_val, y_val)
+
+    if best_name == "xgboost":
+        best_params, best_val_mae = tune_xgboost(X_train, y_train, X_val, y_val)
+        model, test_mae, _, _ = final_model(
+            X_train, y_train, X_val, y_val, X_test, y_test, best_params
+        )
+    else:
+        from sklearn.base import clone
+        best_model, best_val_mae = results[best_name]
+        model = clone(best_model)
+        X_tv = pd.concat([X_train, X_val])
+        y_tv = pd.concat([y_train, y_val])
+        model.fit(X_tv, y_tv)
+        best_params = {k: v for k, v in model.get_params().items()
+                       if v is not None and not callable(v)}
+        test_mae, _, _ = report(f"Final {target} model (test)", y_test,
+                                model.predict(X_test))
+
+    metrics = {
+        "baseline_mae": round(float(baseline_mae), 3),
+        "val_mae": round(float(best_val_mae), 3),
+        "test_mae": round(float(test_mae), 3),
+        "model_type": type(model).__name__,
+    }
+    return model, metrics, best_params
+
+
+# ---------------------------------------------------------------------------
 # Save
 # ---------------------------------------------------------------------------
 
-def save_model(model, best_params, baseline_mae, best_val_mae,
-               test_mae, n_players, n_train,
-               path=None, extra=None, feature_cols=None):
-    # Relative default used to write models/pra_model.pkl next to wherever the
-    # script happened to be run from, silently producing an artifact the API
-    # never loads.
+def save_multi_model(models, metrics, params, feature_cols, path=None,
+                     pra_source="sum", extra=None):
+    """
+    Persist one model per stat.
+
+    Shape:
+      models       {"PTS": est, "REB": est, "AST": est, "PRA": est}
+      metrics      per-target baseline/val/test MAE
+      pra_source   "sum"   -> total PRA is PTS+REB+AST from the three models
+                   "model" -> total PRA comes from its own dedicated model
+    """
     path = os.path.abspath(path or MODEL_PATH)
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
     payload = {
-        "model":        model,
-        "feature_cols": list(feature_cols or FEATURE_COLS),
-        "best_params":  best_params,
-        "baseline_mae": round(float(baseline_mae), 3),
-        "val_mae":      round(float(best_val_mae), 3),
-        "test_mae":     round(float(test_mae), 3),
-        "n_players":    n_players,
-        "n_train":      n_train,
-        "trained_at":   datetime.now().isoformat(),
+        "models": models,
+        "metrics": metrics,
+        "best_params": params,
+        "feature_cols": list(feature_cols),
+        "pra_source": pra_source,
+        "targets": list(models.keys()),
+        "trained_at": datetime.now().isoformat(),
     }
     payload.update(extra or {})
 
     with open(path, "wb") as f:
         pickle.dump(payload, f)
 
-    print(f"\n  Model saved to {path}")
-    print(f"  baseline_MAE={baseline_mae:.2f}  val_MAE={best_val_mae:.2f}  test_MAE={test_mae:.2f}")
+    print(f"\n  Saved {len(models)} models to {path}")
+    for t, m in metrics.items():
+        print(f"    {t:<4} baseline={m['baseline_mae']:.2f}  "
+              f"val={m['val_mae']:.2f}  test={m['test_mae']:.2f}  ({m['model_type']})")
 
 
-
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
+# PRA last: it is trained for comparison against the sum of the other three.
+TARGETS = ["PTS", "REB", "AST", "PRA"]
 
 MODEL_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "models", "pra_model.pkl"
@@ -384,77 +436,57 @@ if __name__ == "__main__":
     if args.with_absence:
         feature_cols += ABSENCE_FEATURE_COLS
 
-    print(f"\n[Step 2] Building training set from bulk parquet {years}")
     extras = ([" opponent"] if args.with_opponent else []) + \
              ([" absence"] if args.with_absence else [])
+    print(f"\n[Step 1] Building training set from bulk parquet {years}")
     print(f"  features: {len(feature_cols)}"
           + (f" (incl.{','.join(extras)})" if extras else ""))
+
     pooled = build_training_frame(years, min_games=args.min_games,
                                   with_opponent=args.with_opponent,
                                   with_absence=args.with_absence)
     n_players = pooled["PLAYER_ID"].nunique()
+    frames = split_by_date(pooled, feature_cols=feature_cols)
 
-    X_train, y_train, X_val, y_val, X_test, y_test = split_by_date(
-        pooled, feature_cols=feature_cols
-    )
+    # PTS/REB/AST are the products; PRA is trained too so we can measure whether
+    # summing the three beats predicting the total directly.
+    models, metrics, params = {}, {}, {}
+    for target in TARGETS:
+        model, m, p = train_target(target, frames, feature_cols)
+        models[target], metrics[target], params[target] = model, m, p
 
-    # Step 3 — Baseline
-    baseline_mae, _, _ = evaluate_baseline(X_val, y_val)
+    # --- does summing the three beat the dedicated PRA model? ---
+    _, _, _, _, X_test, _ = xy(frames, feature_cols, "PRA")
+    y_pra = frames[2]["PRA"]
+    summed = sum(models[t].predict(X_test) for t in ("PTS", "REB", "AST"))
+    sum_mae = float(np.mean(np.abs(summed - y_pra.values)))
+    direct_mae = metrics["PRA"]["test_mae"]
 
-    # Step 6 — Compare models (includes steps 4 & 5 for XGBoost)
-    results, best_name = compare_models(X_train, y_train, X_val, y_val)
+    print("\n" + "=" * 60)
+    print("PRA: summed components vs dedicated model")
+    print("=" * 60)
+    print(f"  sum of PTS+REB+AST models : test MAE {sum_mae:.3f}")
+    print(f"  dedicated PRA model       : test MAE {direct_mae:.3f}")
 
-    # Step 7 — Tune XGBoost (always tune XGBoost; swap if another model won)
-    if best_name == "xgboost":
-        best_params, best_val_mae = tune_xgboost(X_train, y_train, X_val, y_val)
-    else:
-        print(f"\n[Step 7] {best_name} beat XGBoost — no grid search for it")
-        best_model, best_val_mae = results[best_name]
-        best_params = {}
+    # Prefer the sum unless the dedicated model is clearly better. Summing keeps
+    # the headline PRA equal to the three numbers shown beside it; a dedicated
+    # model that disagrees with its own components is confusing in the UI, so it
+    # has to earn the inconsistency.
+    pra_source = "sum" if sum_mae <= direct_mae + 0.05 else "model"
+    print(f"  -> using: {pra_source}")
 
-    # Step 8 — Final evaluation on the held-out test set.
-    if best_name == "xgboost":
-        model, test_mae, test_rmse, test_r2 = final_model(
-            X_train, y_train, X_val, y_val, X_test, y_test, best_params
-        )
-    else:
-        # Refit the WINNING estimator on train+val.
-        #
-        # This branch used to do `best_model_cls()` -- constructing a fresh
-        # default estimator and throwing away the model compare_models had
-        # already selected and fitted. For RandomForest that silently discarded
-        # n_estimators=100, max_depth=8, random_state=42 and trained an
-        # unseeded default instead. sklearn.clone keeps the chosen
-        # hyperparameters while giving an unfitted copy to refit.
-        from sklearn.base import clone
+    metrics["PRA"]["sum_test_mae"] = round(sum_mae, 3)
 
-        model = clone(best_model)
-        X_tv = pd.concat([X_train, X_val])
-        y_tv = pd.concat([y_train, y_val])
-        model.fit(X_tv, y_tv)
-        best_params = {
-            k: v for k, v in model.get_params().items()
-            if v is not None and not callable(v)
-        }
-        test_mae, test_rmse, test_r2 = report(
-            "Final model (test set)", y_test, model.predict(X_test)
-        )
-
-    save_model(
-        model=model,
-        best_params=best_params,
-        baseline_mae=baseline_mae,
-        best_val_mae=best_val_mae,
-        test_mae=test_mae,
-        n_players=n_players,
-        n_train=len(X_train),
-        feature_cols=feature_cols,
+    save_multi_model(
+        models, metrics, params, feature_cols,
         path=os.path.abspath(args.out),
+        pra_source=pra_source,
         extra={
-            "model_type": type(model).__name__,
             "data_source": "sportsdataverse bulk parquet",
             "seasons": ",".join(str(y) for y in years),
+            "n_players": n_players,
             "n_rows": len(pooled),
+            "n_train": len(frames[0]),
             "with_opponent": args.with_opponent,
             "with_absence": args.with_absence,
             "sklearn_version": __import__("sklearn").__version__,
@@ -462,14 +494,12 @@ if __name__ == "__main__":
     )
 
     print("\n" + "=" * 60)
-    print("Pipeline complete!")
-    print(f"  Model        : {type(model).__name__}")
-    print(f"  Players      : {n_players}")
-    print(f"  Baseline MAE : {baseline_mae:.2f} PRA pts")
-    print(f"  Best val MAE : {best_val_mae:.2f} PRA pts")
-    print(f"  Test MAE     : {test_mae:.2f} PRA pts")
-    if test_mae < baseline_mae:
-        print(f"  Model beats baseline by {baseline_mae - test_mae:.2f} pts")
-    else:
-        print("  WARNING: model does NOT beat baseline")
+    print("Pipeline complete")
+    print(f"  Players : {n_players}   Rows: {len(pooled)}")
+    for t in TARGETS:
+        m = metrics[t]
+        delta = m["baseline_mae"] - m["test_mae"]
+        flag = "beats baseline" if delta > 0 else "WORSE than baseline"
+        print(f"  {t:<4} test MAE {m['test_mae']:.2f}  vs baseline "
+              f"{m['baseline_mae']:.2f}  ({delta:+.2f}, {flag})")
     print("=" * 60)
