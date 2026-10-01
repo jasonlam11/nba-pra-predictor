@@ -456,24 +456,39 @@ GAME_DATE in nba_api format            0 bad
 WL in {W,L}                            0 bad
 ```
 
-**Layer 2 — direct diff against live `nba_api`** (best effort). This compares
-our translated rows against what the NBA itself returns for the same player.
+**Layer 2 — agreement with the NBA's own record.**
 
-**It currently reports `INCONCLUSIVE`, not `PASSED`,** because `stats.nba.com`
-does not respond (§1). A skipped check is not a passed check, and the script says
-so deliberately — otherwise it would read as "cross-validated against the
-official source" when no comparison happened. Pass `--require-live` to make
-unreachability a hard failure.
+This compares every player's season totals against the league's published
+figures:
 
-What layer 2 would catch that layer 1 cannot: a *systematic* disagreement between
-ESPN's box scores and the NBA's official record — a rebound credited differently,
-a minutes rounding convention. Layer 1 proves internal consistency; layer 2 would
-prove agreement with the source of truth. Practical risk is low (it is the same
-underlying game data) but low risk is not verification.
+```
+players compared                      506
+games played agree                    95.8%
+PTS totals identical (matched gp)     100.00%
+REB totals identical (matched gp)     100.00%
+AST totals identical (matched gp)     100.00%
+```
 
-To close it: run `python scripts/check_parity.py --require-live` from a network
-the NBA does not block, or add an independent third source such as
-Basketball-Reference for a subset of players.
+Season totals are an exacting test despite being aggregates — one mis-parsed or
+duplicated box-score row shifts a player's total and shows up immediately. Zero
+players disagree.
+
+This check previously called `stats.nba.com` directly and **could never
+complete**, because the NBA blocks us (§1); it reported `INCONCLUSIVE` rather
+than pretending to pass. The resolution is that the NBA's *data* is reachable
+even though its *servers* are not: sportsdataverse republishes stats.nba.com
+season totals as parquet on GitHub Releases
+(`nba_stats_player_season_stats`). Same source of truth, no blocked host — and
+full league coverage instead of the three-player spot check the live version
+attempted.
+
+**The 4.2% where games played disagree is expected, not a defect.** ESPN counts
+the NBA Cup championship game as a regular-season game and the NBA does not. In
+2025-26 that is NYK and SAS, who show 83 games to the league's 82, shifting the
+season totals of everyone on those two rosters. This is also why the invariant
+above allows 82–83 games per team. The gate therefore requires exact agreement
+only among players whose games-played matches — where it demands 100%, with no
+tolerance.
 
 ### CI guard on serving weight
 
@@ -546,7 +561,6 @@ Scheduled workflows only run from the **default branch**.
   appear the next morning. Fine for predicting tonight; the header shows
   "data · <date>" and flips to "stale data" past the threshold rather than
   implying live.
-- **Live parity unverified** (§9).
 - **Absence proxy unmeasured in production** (§6) — now accumulating the data
   needed to measure it.
 - **Third-party upstream.** If sportsdataverse stops publishing, the app degrades

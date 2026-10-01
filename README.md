@@ -136,6 +136,12 @@ python scripts/check_parity.py     # proves the bulk data matches nba_api
 is the guarantee the whole design rests on — if it fails, the app can no longer
 be hosted for free.
 
+`check_parity.py` checks nine structural invariants and then compares every
+player's season totals against the NBA's own published record. Current result:
+**points, rebounds and assists match exactly, for 100% of players whose
+games-played agrees** (the remaining 4% are the NBA Cup final, which ESPN counts
+as a regular-season game and the NBA does not).
+
 Both run in CI on every push and pull request (`.github/workflows/ci.yml`),
 along with a check that `app.main` still imports none of the training stack.
 

@@ -122,3 +122,43 @@ def load_seasons(years) -> pd.DataFrame:
     if not frames:
         raise RuntimeError(f"No data loaded for seasons {list(years)}")
     return pd.concat(frames, ignore_index=True)
+
+
+# The same project also republishes data scraped from stats.nba.com itself.
+# That matters: stats.nba.com blocks us directly, but its *data* is reachable
+# here, which is what makes verification against the official record possible.
+NBA_STATS_BASE = (
+    "https://github.com/sportsdataverse/sportsdataverse-data/"
+    "releases/download/nba_stats_player_season_stats"
+)
+
+
+def load_official_season_stats(year: int) -> pd.DataFrame:
+    """
+    Official NBA season totals per player, as published by stats.nba.com.
+
+    Used only by check_parity.py, to verify our ESPN-derived box scores against
+    the league's own record. Returns None if that season is not published.
+    """
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    path = os.path.join(CACHE_DIR, f"player_season_stats_{year}.parquet")
+
+    if not os.path.exists(path):
+        url = f"{NBA_STATS_BASE}/player_season_stats_{year}.parquet"
+        print(f"  downloading player_season_stats_{year}.parquet ...")
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "nba-pra-predictor"})
+            with urllib.request.urlopen(req, timeout=60) as resp, open(path + ".tmp", "wb") as fh:
+                fh.write(resp.read())
+            os.replace(path + ".tmp", path)
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return None
+            raise
+
+    df = pd.read_parquet(path)
+    return df[
+        (df["measure_type"] == "base")
+        & (df["season_type"] == "regular-season")
+        & (df["per_mode"] == "totals")
+    ]
