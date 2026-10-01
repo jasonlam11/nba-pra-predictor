@@ -1,0 +1,18 @@
+{
+  "_README": [
+    "Manual ESPN athlete id -> nba_api player id overrides. Highest priority in",
+    "id_map.py; use it when name matching picks the wrong player or misses one",
+    "you care about. Keys beginning with an underscore are ignored.",
+    "",
+    "Find the nba_api id with:",
+    "  python -c \"from nba_api.stats.static import players; print(players.find_players_by_full_name('Name'))\"",
+    "",
+    "Currently unmatched with >=10 games (all deep-bench; they still work via",
+    "synthetic ids, so these are optional):",
+    "  4683934 Jahmai Mashack (31g), 4597259 Javonte Cooke (19g),",
+    "  4397784 Malachi Smith (15g), 4898237 Bez Mbeng (15g),",
+    "  4396963 Blake Hinson (14g), 4683742 Julian Reese (13g)",
+    "",
+    "Example:  \"4683934\": 1642345"
+  ]
+}

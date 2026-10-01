@@ -61,7 +61,9 @@ def _load_overrides() -> dict:
     if not os.path.exists(OVERRIDES_PATH):
         return {}
     with open(OVERRIDES_PATH) as fh:
-        return {str(k): int(v) for k, v in json.load(fh).items()}
+        raw = json.load(fh)
+    # Underscore keys are documentation inside the file, not mappings.
+    return {str(k): int(v) for k, v in raw.items() if not str(k).startswith("_")}
 
 
 def _nba_static_index():

@@ -4,6 +4,8 @@ Predicts a player's **P**oints + **R**ebounds + **A**ssists for their next game,
 using a model trained on four seasons of box scores. Next.js frontend, FastAPI
 backend, and a scheduled job that rebuilds the data once a day.
 
+For how the whole thing fits together and why, see **[ARCHITECTURE.md](ARCHITECTURE.md)**.
+
 ## Why it works the way it does
 
 The obvious design — call the NBA's stats API when a user asks for a player — does
