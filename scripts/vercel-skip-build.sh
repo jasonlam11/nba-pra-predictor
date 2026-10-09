@@ -15,6 +15,11 @@
 
 set -u
 
+# Loud marker: Vercel does not always surface ignore-command output, so if this
+# line is absent from a build log the command did not run at all -- which is a
+# different problem from it deciding to build.
+echo "[vercel-skip-build] evaluating: $*  (cwd=$(pwd))"
+
 root=$(git rev-parse --show-toplevel 2>/dev/null) || {
   echo "not a git checkout; building to be safe"
   exit 1
