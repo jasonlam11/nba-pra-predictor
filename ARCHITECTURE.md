@@ -579,6 +579,31 @@ app behaves identically with or without a deployment, and without a cold start.
 
 ### Deployed (optional)
 
+Two configurations are committed. **Vercel-only** (`vercel.json`) runs the
+frontend and the FastAPI backend as two [Services](https://vercel.com/docs/services)
+on one domain — cold starts in seconds, and no CORS because both halves share an
+origin. **Vercel + Render** (`render.yaml`) splits them; Render's free tier
+sleeps after 15 minutes and takes about a minute to wake.
+
+The Vercel path needs one deliberate piece of glue. Vercel routes `/api/(.*)` to
+the backend service but passes the **original** path through, so `/api/health`
+arrives as `/api/health`. `backend/vercel_app.py` strips that prefix at the ASGI
+boundary rather than prefixing every route, which keeps the routes identical on
+Vercel, on Render and locally. Mounting the app under a parent FastAPI instance
+would be the obvious alternative and is wrong here: Starlette does not propagate
+lifespan events into mounted sub-applications, so the snapshot would never load.
+
+`store._db()` also loads the snapshot on first use if it is not already loaded.
+The lifespan handler normally does it, but not every serverless adapter runs
+ASGI lifespan events, and the failure mode without this is an otherwise healthy
+deployment reporting "no data" on every request.
+
+Vercel's Python runtime supports 3.12 and newer only. The serving requirements
+install cleanly there because they contain no numpy — the same split that keeps
+the deployed bundle near 21 MB is what makes this possible at all.
+
+
+
 Backend on Render free tier via `render.yaml`, frontend on Vercel. Set
 `CORS_ORIGINS` on the backend and `NEXT_PUBLIC_API_URL` on the frontend. Render's
 blocked IP is irrelevant because the API makes no upstream calls; the only real

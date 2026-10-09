@@ -1,0 +1,8 @@
+# The web service is rooted at the repository root, so keep things it does not
+# need out of its build context. The api service has its own root (backend/)
+# and is unaffected by this file.
+backend/venv/
+backend/data/raw/
+backend/data/snapshot.db
+backend/scripts/
+docs/

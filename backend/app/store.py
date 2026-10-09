@@ -42,6 +42,7 @@ _path = None
 _generation = 0
 _meta = {}
 _lock = threading.Lock()
+_init_lock = threading.Lock()
 
 
 class SnapshotUnavailable(RuntimeError):
@@ -118,6 +119,16 @@ def load(path: str = None) -> dict:
 
 def _db() -> sqlite3.Connection:
     """This thread's connection, opened on first use and after a hot-swap."""
+    if _path is None:
+        # Normally the snapshot is loaded by the app's lifespan handler. Some
+        # serverless adapters do not run ASGI lifespan events, which would leave
+        # every request reporting "no data" on an otherwise healthy deployment.
+        # Loading here on first use makes startup method-agnostic.
+        # A separate lock: load() takes _lock itself, and threading.Lock is not
+        # reentrant, so reusing it here would deadlock on the first request.
+        with _init_lock:
+            if _path is None:
+                load()
     if _path is None:
         raise SnapshotUnavailable("Snapshot not loaded")
 

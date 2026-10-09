@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...except the production API base, which is a relative path, not a secret.
+# Committing it means a Vercel deploy needs no dashboard configuration.
+!.env.production
 
 # vercel
 .vercel

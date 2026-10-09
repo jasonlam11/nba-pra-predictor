@@ -234,6 +234,43 @@ backend/
 
 ## Deploying
 
+Two options are configured. **Vercel-only is the better one** — Render's free
+tier sleeps after 15 minutes and takes about a minute to wake, which reads as
+broken to anyone clicking a link.
+
+### Vercel only (recommended)
+
+`vercel.json` defines two [Services](https://vercel.com/docs/services): the
+Next.js frontend at `/` and the FastAPI backend at `/api`, built independently
+and served from one domain. Cold starts are seconds rather than a minute, and
+because both halves share an origin there is no CORS to configure.
+
+1. Import the repo at [vercel.com/new](https://vercel.com/new). Both services
+   are detected automatically.
+2. Set one environment variable: `SNAPSHOT_URL` =
+   `https://github.com/<you>/nba-pra-predictor/releases/download/data-snapshot/snapshot.db`
+
+That is the whole setup. `.env.production` is committed (it holds a relative
+path, not a secret), so the frontend already knows to call `/api`.
+
+Two details that make this work, both load-bearing:
+
+- **Vercel passes the original path through.** `GET /api/health` reaches the
+  service as `/api/health`, not `/health`. `backend/vercel_app.py` strips the
+  prefix at the ASGI boundary so the routes stay identical across Vercel,
+  Render and local. Mounting the app under a parent would have been simpler but
+  Starlette does not propagate lifespan into mounted sub-apps, so the snapshot
+  would never load.
+- **Vercel's Python runtime is 3.12+ only.** The serving requirements have no
+  numpy, so they install cleanly there; the full `requirements-data.txt` would
+  not (see the Python version note above).
+
+Note that Vercel's Hobby plan is
+[non-commercial use only](https://vercel.com/docs/limits/fair-use-guidelines#commercial-usage).
+Ads or affiliate links would require Pro.
+
+### Vercel + Render
+
 `render.yaml` describes the backend service. Set `CORS_ORIGINS` to the deployed
 frontend's origin and `NEXT_PUBLIC_API_URL` on Vercel to the Render URL. Both
 free tiers suffice; the only cost is Render's ~1 minute cold start after 15
