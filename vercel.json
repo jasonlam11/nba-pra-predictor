@@ -3,13 +3,11 @@
   "services": {
     "web": {
       "root": "./",
-      "framework": "nextjs",
-      "ignoreCommand": "bash scripts/vercel-skip-build.sh src public package.json package-lock.json next.config.ts tsconfig.json postcss.config.js tailwind.config.js eslint.config.mjs .env.production vercel.json"
+      "framework": "nextjs"
     },
     "api": {
       "root": "backend/",
-      "entrypoint": "vercel_app:app",
-      "ignoreCommand": "bash ../scripts/vercel-skip-build.sh backend/app backend/vercel_app.py backend/requirements.txt backend/.python-version vercel.json"
+      "entrypoint": "vercel_app:app"
     }
   },
   "rewrites": [
