@@ -6,6 +6,65 @@ backend, and a scheduled job that rebuilds the data once a day.
 
 For how the whole thing fits together and why, see **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 
+![Dashboard](docs/screenshots/dashboard.png)
+
+## Walkthrough
+
+### 1. Pick a player
+
+The dashboard lists the day's games and searches all ~690 players. Searching is
+offline — the player index ships inside the snapshot, so it never leaves the
+machine.
+
+The small `data · Oct 9` in the header is deliberate. Predictions are
+precomputed twice a day rather than fetched live, so the UI says when its data
+is from instead of implying it is current. If a refresh is ever missed it turns
+gold and reads `stale data`.
+
+### 2. Read the projection
+
+![Player prediction](docs/screenshots/player-prediction.png)
+
+Points, rebounds and assists each come from their own model; the PRA headline is
+the three added together, so the big number always equals the three beside it.
+
+`Confidence` is derived from the model's validation error relative to the size
+of the projection — a 37-PRA forecast carries the same absolute error as a
+12-PRA one, so the smaller projection is proportionally less certain.
+
+### 3. Compare against a line
+
+The Prop Line Analyzer is the part worth lingering on:
+
+| | |
+|---|---|
+| `37.4 ± 5.9` | the model's typical error **for that stat** — about ±4.5 on points, ±1.3 on assists. Switching the PTS/REB/AST tabs changes it. |
+| `▼ UNDER by 0.1` | the raw comparison against your line |
+| `within margin of error` | shown when the gap is inside half the typical error |
+
+That last line exists because a projection of 37.4 against a line of 37.5 looks
+like a decision and is not one. The model is not precise to a tenth of a point
+and the interface should not pretend otherwise.
+
+### 4. See what is driving it
+
+![Full player view](docs/screenshots/player-full.png)
+
+- **Teammates Out** — rotation players ruled out, and the minutes they represent.
+  When a starter sits, those minutes get redistributed; this is the single
+  strongest signal in the model — measured at nearly five times the value of
+  opponent strength (+0.147 PRA against +0.031).
+- **Hit rate** — how often the player cleared this line across their last 20 games.
+- **Context** — plain-language factors, colour-coded for whether they push the
+  projection up or down.
+- **Last 20 games** — the chart and log underneath, with your line drawn across it.
+
+> **Note on these screenshots.** They were taken on 9 October 2026, during
+> preseason. That is why a context line reads "175 days rest" — rest is measured
+> from the player's last game, which was in the spring. In season it reads 1–4
+> days. The quirk is listed under Known limitations in
+> [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Why it works the way it does
 
 The obvious design — call the NBA's stats API when a user asks for a player — does
