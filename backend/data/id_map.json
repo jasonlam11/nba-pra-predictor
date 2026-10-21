@@ -9,11 +9,6 @@
   "player_id": 203552,
   "source": "nba_static"
  },
- "2451037": {
-  "name": "Daniel Theis",
-  "player_id": 1628464,
-  "source": "nba_static"
- },
  "2488653": {
   "name": "Mason Plumlee",
   "player_id": 203486,
@@ -44,11 +39,6 @@
   "player_id": 203926,
   "source": "nba_static"
  },
- "2528693": {
-  "name": "Torrey Craig",
-  "player_id": 1628470,
-  "source": "nba_static"
- },
  "2530530": {
   "name": "T.J. McConnell",
   "player_id": 204456,
@@ -57,11 +47,6 @@
  "2531367": {
   "name": "Dwight Powell",
   "player_id": 203939,
-  "source": "nba_static"
- },
- "2566769": {
-  "name": "Malcolm Brogdon",
-  "player_id": 1627763,
   "source": "nba_static"
  },
  "2578185": {
@@ -79,11 +64,6 @@
   "player_id": 1626204,
   "source": "nba_static_ambiguous"
  },
- "2580782": {
-  "name": "Spencer Dinwiddie",
-  "player_id": 203915,
-  "source": "nba_static"
- },
  "2581018": {
   "name": "Kentavious Caldwell-Pope",
   "player_id": 203484,
@@ -94,34 +74,14 @@
   "player_id": 1630264,
   "source": "nba_static"
  },
- "2581190": {
-  "name": "Josh Richardson",
-  "player_id": 1626196,
-  "source": "nba_static"
- },
  "2583632": {
   "name": "Royce O'Neale",
   "player_id": 1626220,
   "source": "nba_static"
  },
- "2583639": {
-  "name": "Elfrid Payton",
-  "player_id": 203901,
-  "source": "nba_static"
- },
- "2595209": {
-  "name": "Damion Lee",
-  "player_id": 1627814,
-  "source": "nba_static"
- },
  "2595516": {
   "name": "Norman Powell",
   "player_id": 1626181,
-  "source": "nba_static"
- },
- "2596107": {
-  "name": "Alex Len",
-  "player_id": 203458,
   "source": "nba_static"
  },
  "2596112": {
@@ -149,11 +109,6 @@
   "player_id": 1627752,
   "source": "nba_static"
  },
- "2990969": {
-  "name": "Georges Niang",
-  "player_id": 1627777,
-  "source": "nba_static"
- },
  "2990984": {
   "name": "Buddy Hield",
   "player_id": 1627741,
@@ -179,11 +134,6 @@
   "player_id": 1627739,
   "source": "nba_static"
  },
- "2991230": {
-  "name": "Fred VanVleet",
-  "player_id": 1627832,
-  "source": "nba_static"
- },
  "2991235": {
   "name": "Steven Adams",
   "player_id": 203500,
@@ -192,11 +142,6 @@
  "2991350": {
   "name": "Alex Caruso",
   "player_id": 1627936,
-  "source": "nba_static"
- },
- "2993370": {
-  "name": "Richaun Holmes",
-  "player_id": 1626158,
   "source": "nba_static"
  },
  "2993874": {
@@ -232,11 +177,6 @@
  "3032979": {
   "name": "Dennis Schroder",
   "player_id": 203471,
-  "source": "nba_static"
- },
- "3033": {
-  "name": "P.J. Tucker",
-  "player_id": 200782,
   "source": "nba_static"
  },
  "3037789": {
@@ -284,11 +224,6 @@
   "player_id": 203897,
   "source": "nba_static"
  },
- "3064447": {
-  "name": "Delon Wright",
-  "player_id": 1626153,
-  "source": "nba_static"
- },
  "3064482": {
   "name": "Bobby Portis",
   "player_id": 1626171,
@@ -309,19 +244,9 @@
   "player_id": 1630209,
   "source": "nba_static"
  },
- "3074752": {
-  "name": "Terry Rozier",
-  "player_id": 1626179,
-  "source": "nba_static"
- },
  "3078576": {
   "name": "Derrick White",
   "player_id": 1628401,
-  "source": "nba_static"
- },
- "3102528": {
-  "name": "Dante Exum",
-  "player_id": 203957,
   "source": "nba_static"
  },
  "3102529": {
@@ -337,11 +262,6 @@
  "3102531": {
   "name": "Kristaps Porzingis",
   "player_id": 204001,
-  "source": "nba_static"
- },
- "3102532": {
-  "name": "Vasilije Micic",
-  "player_id": 203995,
   "source": "nba_static"
  },
  "3102533": {
@@ -414,11 +334,6 @@
   "player_id": 1626145,
   "source": "nba_static"
  },
- "3135048": {
-  "name": "Jahlil Okafor",
-  "player_id": 1626143,
-  "source": "nba_static"
- },
  "3136193": {
   "name": "Devin Booker",
   "player_id": 1626164,
@@ -427,11 +342,6 @@
  "3136195": {
   "name": "Karl-Anthony Towns",
   "player_id": 1626157,
-  "source": "nba_static"
- },
- "3136196": {
-  "name": "Trey Lyles",
-  "player_id": 1626168,
   "source": "nba_static"
  },
  "3136776": {
@@ -564,11 +474,6 @@
   "player_id": 1629634,
   "source": "nba_static"
  },
- "3907387": {
-  "name": "Ben Simmons",
-  "player_id": 1627732,
-  "source": "nba_static"
- },
  "3907497": {
   "name": "Dejounte Murray",
   "player_id": 1627749,
@@ -579,19 +484,9 @@
   "player_id": 1629680,
   "source": "nba_static"
  },
- "3907822": {
-  "name": "Malik Beasley",
-  "player_id": 1627736,
-  "source": "nba_static"
- },
  "3907823": {
   "name": "Terance Mann",
   "player_id": 1629611,
-  "source": "nba_static"
- },
- "3908336": {
-  "name": "Matt Ryan",
-  "player_id": 1630346,
   "source": "nba_static"
  },
  "3908809": {
@@ -602,11 +497,6 @@
  "3908845": {
   "name": "John Collins",
   "player_id": 1628381,
-  "source": "nba_static"
- },
- "3911893": {
-  "name": "Jack McVeigh",
-  "player_id": 1629098,
   "source": "nba_static"
  },
  "3912848": {
@@ -644,29 +534,14 @@
   "player_id": 1629234,
   "source": "nba_static"
  },
- "3915195": {
-  "name": "Shake Milton",
-  "player_id": 1629003,
-  "source": "nba_static"
- },
  "3917376": {
   "name": "Jaylen Brown",
   "player_id": 1627759,
   "source": "nba_static"
  },
- "3919454": {
-  "name": "Terence Davis",
-  "player_id": 1629056,
-  "source": "nba_static"
- },
  "3922230": {
   "name": "Aaron Holiday",
   "player_id": 1628988,
-  "source": "nba_static"
- },
- "3923250": {
-  "name": "PJ Dozier",
-  "player_id": 1628408,
   "source": "nba_static"
  },
  "3934620": {
@@ -719,11 +594,6 @@
   "player_id": 1628449,
   "source": "nba_static"
  },
- "3950760": {
-  "name": "Kylor Kelley",
-  "player_id": 1630283,
-  "source": "nba_static"
- },
  "3975": {
   "name": "Stephen Curry",
   "player_id": 201939,
@@ -747,16 +617,6 @@
  "3995": {
   "name": "Jrue Holiday",
   "player_id": 201950,
-  "source": "nba_static"
- },
- "3999": {
-  "name": "James Johnson",
-  "player_id": 201949,
-  "source": "nba_static"
- },
- "4004": {
-  "name": "Patty Mills",
-  "player_id": 201988,
   "source": "nba_static"
  },
  "4017837": {
@@ -834,11 +694,6 @@
   "player_id": 1629684,
   "source": "nba_static"
  },
- "4066240": {
-  "name": "Braxton Key",
-  "player_id": 1630296,
-  "source": "nba_static"
- },
  "4066259": {
   "name": "De'Aaron Fox",
   "player_id": 1628368,
@@ -904,11 +759,6 @@
   "player_id": 1630695,
   "source": "nba_static"
  },
- "4066405": {
-  "name": "Lamar Stevens",
-  "player_id": 1630205,
-  "source": "nba_static"
- },
  "4066421": {
   "name": "Lonzo Ball",
   "player_id": 1628366,
@@ -939,39 +789,14 @@
   "player_id": 1628380,
   "source": "nba_static"
  },
- "4066668": {
-  "name": "Malachi Flynn",
-  "player_id": 1630201,
-  "source": "nba_static"
- },
- "4066731": {
-  "name": "Jalen McDaniels",
-  "player_id": 1629667,
-  "source": "nba_static"
- },
  "4066757": {
   "name": "Sam Merrill",
   "player_id": 1630241,
   "source": "nba_static"
  },
- "4066786": {
-  "name": "Jeff Dowtin Jr.",
-  "player_id": 1630288,
-  "source": "nba_static"
- },
  "4066796": {
   "name": "DeJon Jarreau",
   "player_id": 1630610,
-  "source": "nba_static"
- },
- "4066808": {
-  "name": "Taze Moore",
-  "player_id": 1631386,
-  "source": "nba_static"
- },
- "4066889": {
-  "name": "Jackson Rowe",
-  "player_id": 1642050,
   "source": "nba_static"
  },
  "4066993": {
@@ -989,11 +814,6 @@
   "player_id": 1628392,
   "source": "nba_static"
  },
- "4230557": {
-  "name": "Vlatko Cancar",
-  "player_id": 1628427,
-  "source": "nba_static"
- },
  "4251": {
   "name": "Paul George",
   "player_id": 202331,
@@ -1002,11 +822,6 @@
  "4277811": {
   "name": "Collin Sexton",
   "player_id": 1629012,
-  "source": "nba_static"
- },
- "4277812": {
-  "name": "Alex Reese",
-  "player_id": 1642024,
   "source": "nba_static"
  },
  "4277813": {
@@ -1034,16 +849,6 @@
   "player_id": 1630631,
   "source": "nba_static"
  },
- "4277890": {
-  "name": "Lonnie Walker IV",
-  "player_id": 1629022,
-  "source": "nba_static"
- },
- "4277892": {
-  "name": "Marcus Garrett",
-  "player_id": 1630585,
-  "source": "nba_static"
- },
  "4277905": {
   "name": "Trae Young",
   "player_id": 1629027,
@@ -1062,11 +867,6 @@
  "4277951": {
   "name": "Luka Garza",
   "player_id": 1630568,
-  "source": "nba_static"
- },
- "4277952": {
-  "name": "Bruno Fernando",
-  "player_id": 1628981,
   "source": "nba_static"
  },
  "4277956": {
@@ -1089,11 +889,6 @@
   "player_id": 1630214,
   "source": "nba_static"
  },
- "4278031": {
-  "name": "Oshae Brissett",
-  "player_id": 1629052,
-  "source": "nba_static"
- },
  "4278039": {
   "name": "Nickeil Alexander-Walker",
   "player_id": 1629638,
@@ -1109,11 +904,6 @@
   "player_id": 1629655,
   "source": "nba_static"
  },
- "4278052": {
-  "name": "Chuma Okeke",
-  "player_id": 1629643,
-  "source": "nba_static"
- },
  "4278053": {
   "name": "Davion Mitchell",
   "player_id": 1630558,
@@ -1127,11 +917,6 @@
  "4278073": {
   "name": "Shai Gilgeous-Alexander",
   "player_id": 1628983,
-  "source": "nba_static"
- },
- "4278075": {
-  "name": "Kevin Knox II",
-  "player_id": 1628995,
   "source": "nba_static"
  },
  "4278076": {
@@ -1154,11 +939,6 @@
   "player_id": 1629008,
   "source": "nba_static"
  },
- "4278111": {
-  "name": "Justin Minaya",
-  "player_id": 1631303,
-  "source": "nba_static"
- },
  "4278129": {
   "name": "Deandre Ayton",
   "player_id": 1629028,
@@ -1177,11 +957,6 @@
  "4278516": {
   "name": "Ethan Thompson",
   "player_id": 1630679,
-  "source": "nba_static"
- },
- "4278541": {
-  "name": "Jaylen Nowell",
-  "player_id": 1629669,
   "source": "nba_static"
  },
  "4278562": {
@@ -1227,11 +1002,6 @@
  "4279532": {
   "name": "Stanley Umude",
   "player_id": 1630649,
-  "source": "nba_static"
- },
- "4279815": {
-  "name": "Terry Taylor",
-  "player_id": 1630678,
   "source": "nba_static"
  },
  "4279888": {
@@ -1289,11 +1059,6 @@
   "player_id": 1630200,
   "source": "nba_static"
  },
- "4395627": {
-  "name": "Cam Reddish",
-  "player_id": 1629629,
-  "source": "nba_static"
- },
  "4395628": {
   "name": "Zion Williamson",
   "player_id": 1629627,
@@ -1319,19 +1084,9 @@
   "player_id": 1631205,
   "source": "nba_static"
  },
- "4395695": {
-  "name": "Jared Butler",
-  "player_id": 1630215,
-  "source": "nba_static"
- },
  "4395702": {
   "name": "Isaiah Joe",
   "player_id": 1630198,
-  "source": "nba_static"
- },
- "4395704": {
-  "name": "Mason Jones",
-  "player_id": 1630222,
   "source": "nba_static"
  },
  "4395712": {
@@ -1379,16 +1134,6 @@
   "player_id": 1629675,
   "source": "nba_static"
  },
- "4396991": {
-  "name": "Talen Horton-Tucker",
-  "player_id": 1629659,
-  "source": "nba_static"
- },
- "4396993": {
-  "name": "Tyrese Haliburton",
-  "player_id": 1630169,
-  "source": "nba_static"
- },
  "4397002": {
   "name": "Ayo Dosunmu",
   "player_id": 1630245,
@@ -1424,39 +1169,9 @@
   "player_id": 1629637,
   "source": "nba_static"
  },
- "4397102": {
-  "name": "Bol Bol",
-  "player_id": 1629626,
-  "source": "nba_static"
- },
- "4397104": {
-  "name": "Miles Norris",
-  "player_id": 1641936,
-  "source": "nba_static"
- },
- "4397107": {
-  "name": "David Duke Jr.",
-  "player_id": 1630561,
-  "source": "nba_static"
- },
  "4397114": {
   "name": "Cormac Ryan",
   "player_id": 1642504,
-  "source": "nba_static"
- },
- "4397119": {
-  "name": "Jared Rhoden",
-  "player_id": 1631197,
-  "source": "nba_static"
- },
- "4397126": {
-  "name": "Moses Brown",
-  "player_id": 1629650,
-  "source": "nba_static"
- },
- "4397134": {
-  "name": "Cole Swider",
-  "player_id": 1631306,
   "source": "nba_static"
  },
  "4397136": {
@@ -1504,11 +1219,6 @@
   "player_id": 1631199,
   "source": "nba_static_ambiguous"
  },
- "4397347": {
-  "name": "Liam Robbins",
-  "player_id": 1641857,
-  "source": "nba_static"
- },
  "4397424": {
   "name": "Neemias Queta",
   "player_id": 1629674,
@@ -1529,16 +1239,6 @@
   "player_id": 1631260,
   "source": "nba_static"
  },
- "4397570": {
-  "name": "Jaylen Sims",
-  "player_id": 1631301,
-  "source": "nba_static"
- },
- "4397654": {
-  "name": "Adam Flagler",
-  "player_id": 1641745,
-  "source": "nba_static"
- },
  "4397688": {
   "name": "Trey Murphy III",
   "player_id": 1630530,
@@ -1547,11 +1247,6 @@
  "4397689": {
   "name": "Drew Peterson",
   "player_id": 1641809,
-  "source": "nba_static"
- },
- "4397693": {
-  "name": "Kessler Edwards",
-  "player_id": 1630556,
   "source": "nba_static"
  },
  "4397784": {
@@ -1587,11 +1282,6 @@
  "4398390": {
   "name": "Jalen Pickett",
   "player_id": 1629618,
-  "source": "nba_static"
- },
- "4409222": {
-  "name": "Trevelin Queen",
-  "player_id": 1630243,
   "source": "nba_static"
  },
  "4411057": {
@@ -1634,11 +1324,6 @@
   "player_id": 1630172,
   "source": "nba_static"
  },
- "4431689": {
-  "name": "Keion Brooks Jr.",
-  "player_id": 1631232,
-  "source": "nba_static"
- },
  "4431690": {
   "name": "Zeke Nnaji",
   "player_id": 1630192,
@@ -1649,29 +1334,9 @@
   "player_id": 1631166,
   "source": "nba_static"
  },
- "4431699": {
-  "name": "Kai Jones",
-  "player_id": 1630539,
-  "source": "nba_static"
- },
- "4431705": {
-  "name": "Anton Watson",
-  "player_id": 1641817,
-  "source": "nba_static"
- },
  "4431714": {
   "name": "Jalen Wilson",
   "player_id": 1630592,
-  "source": "nba_static"
- },
- "4431720": {
-  "name": "Lester Quinones",
-  "player_id": 1631311,
-  "source": "nba_static"
- },
- "4431727": {
-  "name": "Isaiah Wong",
-  "player_id": 1631209,
   "source": "nba_static"
  },
  "4431734": {
@@ -1687,11 +1352,6 @@
  "4431752": {
   "name": "Kobe Brown",
   "player_id": 1641738,
-  "source": "nba_static"
- },
- "4431766": {
-  "name": "Damion Baugh",
-  "player_id": 1641878,
   "source": "nba_static"
  },
  "4431767": {
@@ -1719,19 +1379,9 @@
   "player_id": 1642352,
   "source": "nba_static"
  },
- "4431816": {
-  "name": "Jesse Edwards",
-  "player_id": 1642399,
-  "source": "nba_static"
- },
  "4431823": {
   "name": "Miles McBride",
   "player_id": 1630540,
-  "source": "nba_static"
- },
- "4431828": {
-  "name": "KJ Martin",
-  "player_id": 1630231,
   "source": "nba_static"
  },
  "4431893": {
@@ -1754,11 +1404,6 @@
   "player_id": 904432068,
   "source": "synthetic"
  },
- "4432070": {
-  "name": "Quincy Olivari",
-  "player_id": 1642439,
-  "source": "nba_static"
- },
  "4432107": {
   "name": "Marcus Sasser",
   "player_id": 1631204,
@@ -1774,16 +1419,6 @@
   "player_id": 1630596,
   "source": "nba_static"
  },
- "4432162": {
-  "name": "Brandon Boston",
-  "player_id": 1630527,
-  "source": "nba_static"
- },
- "4432164": {
-  "name": "Jaden Springer",
-  "player_id": 1630531,
-  "source": "nba_static"
- },
  "4432165": {
   "name": "Jalen Suggs",
   "player_id": 1630591,
@@ -1792,11 +1427,6 @@
  "4432166": {
   "name": "Cade Cunningham",
   "player_id": 1630595,
-  "source": "nba_static"
- },
- "4432168": {
-  "name": "Josh Christopher",
-  "player_id": 1630528,
   "source": "nba_static"
  },
  "4432170": {
@@ -1819,11 +1449,6 @@
   "player_id": 1630560,
   "source": "nba_static"
  },
- "4432176": {
-  "name": "Daishen Nix",
-  "player_id": 1630227,
-  "source": "nba_static"
- },
  "4432179": {
   "name": "MarJon Beauchamp",
   "player_id": 1630699,
@@ -1844,19 +1469,9 @@
   "player_id": 1642877,
   "source": "nba_static"
  },
- "4432187": {
-  "name": "Reece Beekman",
-  "player_id": 1641736,
-  "source": "nba_static"
- },
  "4432190": {
   "name": "Andre Jackson Jr.",
   "player_id": 1641748,
-  "source": "nba_static"
- },
- "4432192": {
-  "name": "Keon Johnson",
-  "player_id": 1630553,
   "source": "nba_static"
  },
  "4432194": {
@@ -1873,11 +1488,6 @@
   "name": "Jaylen Clark",
   "player_id": 1641740,
   "source": "nba_static"
- },
- "4432356": {
-  "name": "Johnny Davis",
-  "player_id": 1631098,
-  "source": "nba_static_ambiguous"
  },
  "4432446": {
   "name": "Jabari Walker",
@@ -1944,11 +1554,6 @@
   "player_id": 1630526,
   "source": "nba_static"
  },
- "4432815": {
-  "name": "Isaiah Mobley",
-  "player_id": 1630600,
-  "source": "nba_static"
- },
  "4432816": {
   "name": "LaMelo Ball",
   "player_id": 1630163,
@@ -1962,11 +1567,6 @@
  "4432819": {
   "name": "Tre Mann",
   "player_id": 1630544,
-  "source": "nba_static"
- },
- "4432820": {
-  "name": "D.J. Carton",
-  "player_id": 1630618,
   "source": "nba_static"
  },
  "4432821": {
@@ -2014,21 +1614,6 @@
   "player_id": 1630551,
   "source": "nba_static"
  },
- "4432946": {
-  "name": "Jalen Bridges",
-  "player_id": 1641779,
-  "source": "nba_static"
- },
- "4432957": {
-  "name": "Yuri Collins",
-  "player_id": 1641879,
-  "source": "nba_static"
- },
- "4432971": {
-  "name": "Alex Ducas",
-  "player_id": 1642505,
-  "source": "nba_static"
- },
  "4433076": {
   "name": "Ben Sheppard",
   "player_id": 1641767,
@@ -2062,11 +1647,6 @@
  "4433144": {
   "name": "Caleb Love",
   "player_id": 1631126,
-  "source": "nba_static"
- },
- "4433147": {
-  "name": "Marcus Bagley",
-  "player_id": 1630542,
   "source": "nba_static"
  },
  "4433149": {
@@ -2159,11 +1739,6 @@
   "player_id": 1631127,
   "source": "nba_static"
  },
- "4433620": {
-  "name": "Emoni Bates",
-  "player_id": 1641734,
-  "source": "nba_static"
- },
  "4433621": {
   "name": "Jalen Duren",
   "player_id": 1631105,
@@ -2177,11 +1752,6 @@
  "4433623": {
   "name": "Caleb Houstan",
   "player_id": 1631216,
-  "source": "nba_static"
- },
- "4433626": {
-  "name": "Jalen Hood-Schifino",
-  "player_id": 1641720,
   "source": "nba_static"
  },
  "4433627": {
@@ -2267,11 +1837,6 @@
  "4592401": {
   "name": "N'Faly Dante",
   "player_id": 1642368,
-  "source": "nba_static"
- },
- "4592402": {
-  "name": "Chris Duarte",
-  "player_id": 1630537,
   "source": "nba_static"
  },
  "4592427": {
@@ -2564,16 +2129,6 @@
   "player_id": 1642265,
   "source": "nba_static"
  },
- "4684286": {
-  "name": "Maxwell Lewis",
-  "player_id": 1641721,
-  "source": "nba_static"
- },
- "4684737": {
-  "name": "Jaylen Martin",
-  "player_id": 1641798,
-  "source": "nba_static"
- },
  "4684740": {
   "name": "Amen Thompson",
   "player_id": 1641708,
@@ -2654,11 +2209,6 @@
   "player_id": 1641854,
   "source": "nba_static"
  },
- "4701234": {
-  "name": "Ricky Council IV",
-  "player_id": 1641741,
-  "source": "nba_static"
- },
  "4701845": {
   "name": "Kadary Richmond",
   "player_id": 904701845,
@@ -2667,11 +2217,6 @@
  "4701992": {
   "name": "Max Shulga",
   "player_id": 1642917,
-  "source": "nba_static"
- },
- "4702023": {
-  "name": "Adama Sanogo",
-  "player_id": 1641766,
   "source": "nba_static"
  },
  "4702134": {
@@ -2687,11 +2232,6 @@
  "4702177": {
   "name": "Keon Ellis",
   "player_id": 1631165,
-  "source": "nba_static"
- },
- "4702233": {
-  "name": "JT Thor",
-  "player_id": 1630550,
   "source": "nba_static"
  },
  "4702352": {
@@ -2762,11 +2302,6 @@
  "4706557": {
   "name": "Chris Youngblood",
   "player_id": 1642959,
-  "source": "nba_static"
- },
- "4708972": {
-  "name": "Jazian Gortman",
-  "player_id": 1641789,
   "source": "nba_static"
  },
  "4709131": {
@@ -2949,11 +2484,6 @@
   "player_id": 1641752,
   "source": "nba_static"
  },
- "4909710": {
-  "name": "Phillip Wheeler",
-  "player_id": 1630762,
-  "source": "nba_static"
- },
  "4914336": {
   "name": "Shaedon Sharpe",
   "player_id": 1631101,
@@ -3054,15 +2584,15 @@
   "player_id": 1641731,
   "source": "nba_static"
  },
- "5104156": {
-  "name": "Armel Traore",
-  "player_id": 1642422,
-  "source": "nba_static"
- },
  "5104157": {
   "name": "Victor Wembanyama",
   "player_id": 1641705,
   "source": "nba_static"
+ },
+ "5105337": {
+  "name": "Maliq Brown",
+  "player_id": 905105337,
+  "source": "synthetic"
  },
  "5105550": {
   "name": "GG Jackson",
@@ -3098,6 +2628,11 @@
   "name": "Jett Howard",
   "player_id": 1641724,
   "source": "nba_static"
+ },
+ "5105809": {
+  "name": "Tarris Reed Jr.",
+  "player_id": 905105809,
+  "source": "synthetic"
  },
  "5105839": {
   "name": "Brice Sensabaugh",
@@ -3149,6 +2684,11 @@
   "player_id": 1642367,
   "source": "nba_static"
  },
+ "5107968": {
+  "name": "Ja'Kobi Gillespie",
+  "player_id": 905107968,
+  "source": "synthetic"
+ },
  "5108024": {
   "name": "Yanic Konan Niederhauser",
   "player_id": 1642949,
@@ -3183,11 +2723,6 @@
   "name": "Rocco Zikarsky",
   "player_id": 1642911,
   "source": "nba_static"
- },
- "5159486": {
-  "name": "Yongxi Cui",
-  "player_id": 905159486,
-  "source": "synthetic"
  },
  "5159895": {
   "name": "Yuki Kawamura",
@@ -3229,6 +2764,11 @@
   "player_id": 1643052,
   "source": "nba_static"
  },
+ "5174983": {
+  "name": "Aday Mara",
+  "player_id": 905174983,
+  "source": "synthetic"
+ },
  "5175643": {
   "name": "Egor Demin",
   "player_id": 1642856,
@@ -3269,11 +2809,6 @@
   "player_id": 1642359,
   "source": "nba_static"
  },
- "5211984": {
-  "name": "Ulrich Chomche",
-  "player_id": 1642279,
-  "source": "nba_static"
- },
  "5214637": {
   "name": "Noah Penda",
   "player_id": 1642869,
@@ -3303,6 +2838,11 @@
   "name": "Liam McNeeley",
   "player_id": 1642862,
   "source": "nba_static"
+ },
+ "5241364": {
+  "name": "Bennett Stirtz",
+  "player_id": 905241364,
+  "source": "synthetic"
  },
  "5242496": {
   "name": "Noa Essengue",
@@ -3334,11 +2874,6 @@
   "player_id": 202687,
   "source": "nba_static"
  },
- "6429": {
-  "name": "Alec Burks",
-  "player_id": 202692,
-  "source": "nba_static"
- },
  "6430": {
   "name": "Jimmy Butler III",
   "player_id": 202710,
@@ -3349,34 +2884,9 @@
   "player_id": 202699,
   "source": "nba_static"
  },
- "6442": {
-  "name": "Kyrie Irving",
-  "player_id": 202681,
-  "source": "nba_static"
- },
- "6443": {
-  "name": "Reggie Jackson",
-  "player_id": 202704,
-  "source": "nba_static"
- },
- "6446": {
-  "name": "Cory Joseph",
-  "player_id": 202709,
-  "source": "nba_static"
- },
  "6450": {
   "name": "Kawhi Leonard",
   "player_id": 202695,
-  "source": "nba_static"
- },
- "6461": {
-  "name": "Markieff Morris",
-  "player_id": 202693,
-  "source": "nba_static"
- },
- "6474": {
-  "name": "Tristan Thompson",
-  "player_id": 202684,
   "source": "nba_static"
  },
  "6475": {
@@ -3404,11 +2914,6 @@
   "player_id": 203078,
   "source": "nba_static"
  },
- "6581": {
-  "name": "Jae Crowder",
-  "player_id": 203109,
-  "source": "nba_static"
- },
  "6583": {
   "name": "Anthony Davis",
   "player_id": 203076,
@@ -3422,11 +2927,6 @@
  "6589": {
   "name": "Draymond Green",
   "player_id": 203110,
-  "source": "nba_static"
- },
- "6606": {
-  "name": "Damian Lillard",
-  "player_id": 203081,
   "source": "nba_static"
  },
  "6609": {
