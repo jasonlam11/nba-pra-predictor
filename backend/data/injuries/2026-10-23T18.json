@@ -1,0 +1,760 @@
+{
+ "date": "2026-10-23",
+ "captured_hour_utc": 18,
+ "captured_at": "2026-10-23T18:03:32+00:00",
+ "source": "site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries",
+ "source_timestamp": "2026-10-23T18:03:20Z",
+ "absent_statuses": [
+  "doubtful",
+  "out"
+ ],
+ "n_entries": 72,
+ "entries": [
+  {
+   "name": "Mouhamed Gueye",
+   "team": "ATL",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Foot",
+   "reported": "2026-10-19T19:38Z",
+   "espn_id": 4712863,
+   "expected_minutes": 10.5
+  },
+  {
+   "name": "Henri Veesaar",
+   "team": "ATL",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-09-21T19:50Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "Devin Carter",
+   "team": "BOS",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Illness",
+   "reported": "2026-10-18T14:49Z",
+   "espn_id": 4433188,
+   "expected_minutes": 28.7
+  },
+  {
+   "name": "Tyler Bilodeau",
+   "team": "BKN",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Shoulder",
+   "reported": "2026-10-22T03:39Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "Grant Williams",
+   "team": "CHA",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Hamstring",
+   "reported": "2026-10-22T21:10Z",
+   "espn_id": 4066218,
+   "expected_minutes": 20.2
+  },
+  {
+   "name": "Coby White",
+   "team": "CHA",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Calf",
+   "reported": "2026-10-22T21:07Z",
+   "espn_id": 4395651,
+   "expected_minutes": 18.9
+  },
+  {
+   "name": "Kon Knueppel",
+   "team": "CHA",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Hamstring",
+   "reported": "2026-10-22T21:05Z",
+   "espn_id": 5061575,
+   "expected_minutes": 30.9
+  },
+  {
+   "name": "Kylan Boswell",
+   "team": "CHA",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-10-20T20:55Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "Nic Claxton",
+   "team": "CHI",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Hamstring",
+   "reported": "2026-10-19T17:38Z",
+   "espn_id": 4278067,
+   "expected_minutes": 22.1
+  },
+  {
+   "name": "Jett Howard",
+   "team": "DAL",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Calf",
+   "reported": "2026-10-22T20:15Z",
+   "espn_id": 5105806,
+   "expected_minutes": 10.5
+  },
+  {
+   "name": "Caleb Martin",
+   "team": "DAL",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Thumb",
+   "reported": "2026-10-22T20:15Z",
+   "espn_id": 3138160,
+   "expected_minutes": 18.0
+  },
+  {
+   "name": "Santi Aldama",
+   "team": "DAL",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-10-22T20:13Z",
+   "espn_id": 4593125,
+   "expected_minutes": 27.5
+  },
+  {
+   "name": "Tarik Biberovic",
+   "team": "DAL",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Heel",
+   "reported": "2026-10-22T20:12Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "Dereck Lively II",
+   "team": "DAL",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Foot",
+   "reported": "2026-10-22T20:10Z",
+   "espn_id": 4683688,
+   "expected_minutes": 16.4
+  },
+  {
+   "name": "Spencer Jones",
+   "team": "DEN",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Hamstring",
+   "reported": "2026-10-23T05:19Z",
+   "espn_id": 4592427,
+   "expected_minutes": 20.6
+  },
+  {
+   "name": "Cameron Johnson",
+   "team": "DEN",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Ankle",
+   "reported": "2026-10-23T04:24Z",
+   "espn_id": 3138196,
+   "expected_minutes": 30.4
+  },
+  {
+   "name": "Julian Strawther",
+   "team": "DEN",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-10-17T00:52Z",
+   "espn_id": 4432181,
+   "expected_minutes": 16.3
+  },
+  {
+   "name": "Charles Bassey",
+   "team": "GSW",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Knee",
+   "reported": "2026-10-23T00:12Z",
+   "espn_id": 4397886,
+   "expected_minutes": 11.7
+  },
+  {
+   "name": "Brandin Podziemski",
+   "team": "GSW",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Back",
+   "reported": "2026-10-23T00:04Z",
+   "espn_id": 4709138,
+   "expected_minutes": 30.8
+  },
+  {
+   "name": "Kristaps Porzingis",
+   "team": "GSW",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Illness",
+   "reported": "2026-10-21T18:27Z",
+   "espn_id": 3102531,
+   "expected_minutes": 25.8
+  },
+  {
+   "name": "Moses Moody",
+   "team": "GSW",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-10-16T16:14Z",
+   "espn_id": 4432171,
+   "expected_minutes": 31.1
+  },
+  {
+   "name": "Jimmy Butler III",
+   "team": "GSW",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-10-16T16:11Z",
+   "espn_id": 6430,
+   "expected_minutes": 29.7
+  },
+  {
+   "name": "Steven Adams",
+   "team": "HOU",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Calf",
+   "reported": "2026-10-22T21:12Z",
+   "espn_id": 2991235,
+   "expected_minutes": 25.8
+  },
+  {
+   "name": "Reed Sheppard",
+   "team": "HOU",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Knee",
+   "reported": "2026-10-22T21:09Z",
+   "espn_id": 4711272,
+   "expected_minutes": 27.2
+  },
+  {
+   "name": "Ben Sheppard",
+   "team": "IND",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Knee",
+   "reported": "2026-10-22T20:54Z",
+   "espn_id": 4433076,
+   "expected_minutes": 19.4
+  },
+  {
+   "name": "Aaron Nesmith",
+   "team": "IND",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Hamstring",
+   "reported": "2026-10-22T20:50Z",
+   "espn_id": 4396909,
+   "expected_minutes": 30.0
+  },
+  {
+   "name": "T.J. McConnell",
+   "team": "IND",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Hamstring",
+   "reported": "2026-10-22T20:49Z",
+   "espn_id": 2530530,
+   "expected_minutes": 18.7
+  },
+  {
+   "name": "Johnny Furphy",
+   "team": "IND",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-02-09T21:43Z",
+   "espn_id": 5157066,
+   "expected_minutes": 21.2
+  },
+  {
+   "name": "Bradley Beal",
+   "team": "LAC",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-10-15T01:03Z",
+   "espn_id": 6580,
+   "expected_minutes": 20.2
+  },
+  {
+   "name": "Max Strus",
+   "team": "LAC",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Foot",
+   "reported": "2026-10-05T22:21Z",
+   "espn_id": 4065778,
+   "expected_minutes": 27.9
+  },
+  {
+   "name": "Yanic Konan Niederhauser",
+   "team": "LAC",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Foot",
+   "reported": "2026-09-28T18:07Z",
+   "espn_id": 5108024,
+   "expected_minutes": 15.7
+  },
+  {
+   "name": "Brandon Ingram",
+   "team": "TOR",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Heel",
+   "reported": "2026-09-28T18:01Z",
+   "espn_id": 3913176,
+   "expected_minutes": 31.5
+  },
+  {
+   "name": "Jordan Miller",
+   "team": "LAC",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Shoulder",
+   "reported": "2026-08-26T20:04Z",
+   "espn_id": 4396818,
+   "expected_minutes": 23.3
+  },
+  {
+   "name": "Adou Thiero",
+   "team": "LAL",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-10-23T00:10Z",
+   "espn_id": 5060631,
+   "expected_minutes": 7.5
+  },
+  {
+   "name": "Cameron Carr",
+   "team": "LAL",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Oblique",
+   "reported": "2026-10-23T00:10Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "Jake LaRavia",
+   "team": "LAL",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Ankle",
+   "reported": "2026-10-23T00:10Z",
+   "espn_id": 4592691,
+   "expected_minutes": 15.7
+  },
+  {
+   "name": "Cedric Coward",
+   "team": "MEM",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Wrist",
+   "reported": "2026-10-23T00:21Z",
+   "espn_id": 4903027,
+   "expected_minutes": 24.8
+  },
+  {
+   "name": "Isaiah Stewart",
+   "team": "MEM",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Ankle",
+   "reported": "2026-10-23T00:16Z",
+   "espn_id": 4432810,
+   "expected_minutes": 10.1
+  },
+  {
+   "name": "Donte DiVincenzo",
+   "team": "MIN",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Achilles",
+   "reported": "2026-10-05T20:53Z",
+   "espn_id": 3934673,
+   "expected_minutes": 24.1
+  },
+  {
+   "name": "Nikola Topic",
+   "team": "OKC",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Back",
+   "reported": "2026-10-21T22:13Z",
+   "espn_id": 5159925,
+   "expected_minutes": 6.1
+  },
+  {
+   "name": "Thomas Sorber",
+   "team": "OKC",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-10-21T22:08Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "Otega Oweh",
+   "team": "OKC",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Achilles",
+   "reported": "2026-10-15T01:22Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "Anthony Black",
+   "team": "ORL",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Ankle",
+   "reported": "2026-10-23T16:06Z",
+   "espn_id": 4712849,
+   "expected_minutes": 26.4
+  },
+  {
+   "name": "Jonathan Isaac",
+   "team": "ORL",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-10-22T20:19Z",
+   "espn_id": 4065654,
+   "expected_minutes": 8.8
+  },
+  {
+   "name": "Noah Penda",
+   "team": "ORL",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Hamstring",
+   "reported": "2026-10-17T22:19Z",
+   "espn_id": 5214637,
+   "expected_minutes": 6.1
+  },
+  {
+   "name": "Izaiyah Nelson",
+   "team": "ORL",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Ankle",
+   "reported": "2026-09-28T21:33Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "Joel Embiid",
+   "team": "PHI",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Rest",
+   "reported": "2026-10-23T14:03Z",
+   "espn_id": 3059318,
+   "expected_minutes": 34.0
+  },
+  {
+   "name": "Tacko Fall",
+   "team": "PHI",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Quadriceps",
+   "reported": "2026-10-23T05:21Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "Dean Wade",
+   "team": "PHI",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Ankle",
+   "reported": "2026-10-23T05:20Z",
+   "espn_id": 3912848,
+   "expected_minutes": 20.8
+  },
+  {
+   "name": "Dominick Barlow",
+   "team": "PHI",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Back",
+   "reported": "2026-10-19T21:07Z",
+   "espn_id": 4870562,
+   "expected_minutes": 10.7
+  },
+  {
+   "name": "Ariel Hukporti",
+   "team": "PHI",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Achilles",
+   "reported": "2026-10-06T19:17Z",
+   "espn_id": 4871141,
+   "expected_minutes": 7.5
+  },
+  {
+   "name": "Luke Kennard",
+   "team": "PHX",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Knee",
+   "reported": "2026-10-23T18:00Z",
+   "espn_id": 3913174,
+   "expected_minutes": 32.5
+  },
+  {
+   "name": "Oso Ighodaro",
+   "team": "PHX",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Hip",
+   "reported": "2026-10-22T04:52Z",
+   "espn_id": 4601023,
+   "expected_minutes": 24.5
+  },
+  {
+   "name": "Mark Williams",
+   "team": "PHX",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Shoulder",
+   "reported": "2026-09-11T16:03Z",
+   "espn_id": 4701232,
+   "expected_minutes": 21.2
+  },
+  {
+   "name": "Branden Carlson",
+   "team": "POR",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Concussion",
+   "reported": "2026-10-22T23:48Z",
+   "espn_id": 4592435,
+   "expected_minutes": 13.7
+  },
+  {
+   "name": "Chris Youngblood",
+   "team": "POR",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Ankle",
+   "reported": "2026-10-22T23:48Z",
+   "espn_id": 4706557,
+   "expected_minutes": 6.2
+  },
+  {
+   "name": "Shaedon Sharpe",
+   "team": "POR",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-08-24T20:23Z",
+   "espn_id": 4914336,
+   "expected_minutes": 16.6
+  },
+  {
+   "name": "Malik Monk",
+   "team": "SAC",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Ankle",
+   "reported": "2026-10-22T23:49Z",
+   "espn_id": 4066262,
+   "expected_minutes": 21.0
+  },
+  {
+   "name": "Ben Simmons",
+   "team": "SAC",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Achilles",
+   "reported": "2026-10-21T04:22Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "Dylan Cardwell",
+   "team": "SAC",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Calf",
+   "reported": "2026-10-15T14:40Z",
+   "espn_id": 4433174,
+   "expected_minutes": 20.9
+  },
+  {
+   "name": "Maxime Raynaud",
+   "team": "SAC",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-10-15T14:36Z",
+   "espn_id": 4898371,
+   "expected_minutes": 31.8
+  },
+  {
+   "name": "Keldon Johnson",
+   "team": "SAS",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Mouth",
+   "reported": "2026-10-23T17:38Z",
+   "espn_id": 4395723,
+   "expected_minutes": 16.7
+  },
+  {
+   "name": "De'Aaron Fox",
+   "team": "SAS",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Wrist",
+   "reported": "2026-10-23T17:37Z",
+   "espn_id": 4066259,
+   "expected_minutes": 34.1
+  },
+  {
+   "name": "Tobias Harris",
+   "team": "SAS",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Calf",
+   "reported": "2026-10-22T22:03Z",
+   "espn_id": 6440,
+   "expected_minutes": 34.3
+  },
+  {
+   "name": "Jayden Quaintance",
+   "team": "SAS",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-10-05T21:43Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "Nate Bittle",
+   "team": "TOR",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Foot",
+   "reported": "2026-10-20T18:05Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "Trey Alexander",
+   "team": "UTA",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-10-22T23:02Z",
+   "espn_id": 4433268,
+   "expected_minutes": 12.3
+  },
+  {
+   "name": "Jusuf Nurkic",
+   "team": "UTA",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Foot",
+   "reported": "2026-10-07T23:07Z",
+   "espn_id": 3102530,
+   "expected_minutes": 28.4
+  },
+  {
+   "name": "Felix Okpara",
+   "team": "WAS",
+   "status": "Day-To-Day",
+   "status_code": "INJURY_STATUS_DAYTODAY",
+   "description": "Illness",
+   "reported": "2026-10-22T20:48Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "AJ Dybantsa",
+   "team": "WAS",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Ankle",
+   "reported": "2026-10-22T16:22Z",
+   "espn_id": null,
+   "expected_minutes": 0.0
+  },
+  {
+   "name": "Tristan Vukcevic",
+   "team": "WAS",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Hip",
+   "reported": "2026-10-01T19:11Z",
+   "espn_id": 4997537,
+   "expected_minutes": 17.5
+  },
+  {
+   "name": "Jamir Watkins",
+   "team": "WAS",
+   "status": "Out",
+   "status_code": "INJURY_STATUS_OUT",
+   "description": "Knee",
+   "reported": "2026-07-30T20:11Z",
+   "espn_id": 4606840,
+   "expected_minutes": 24.7
+  }
+ ],
+ "team_absent_minutes": {
+  "1610612737": 10.5,
+  "1610612739": 27.9,
+  "1610612740": 12.3,
+  "1610612742": 34.4,
+  "1610612743": 16.3,
+  "1610612744": 86.6,
+  "1610612746": 59.2,
+  "1610612747": 7.5,
+  "1610612750": 24.1,
+  "1610612751": 22.1,
+  "1610612752": 7.5,
+  "1610612753": 41.3,
+  "1610612754": 39.9,
+  "1610612755": 10.7,
+  "1610612756": 21.2,
+  "1610612757": 22.8,
+  "1610612758": 81.4,
+  "1610612760": 19.8,
+  "1610612761": 31.5,
+  "1610612762": 28.4,
+  "1610612763": 27.5,
+  "1610612764": 42.2,
+  "1610612765": 34.3,
+  "1610612766": 70.0
+ }
+}

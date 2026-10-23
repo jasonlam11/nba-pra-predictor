@@ -159,6 +159,11 @@
   "player_id": 203937,
   "source": "nba_static"
  },
+ "2995706": {
+  "name": "Mario Hezonja",
+  "player_id": 1626209,
+  "source": "nba_static"
+ },
  "2999547": {
   "name": "Gary Harris",
   "player_id": 203914,
@@ -698,6 +703,11 @@
   "name": "Sam Hauser",
   "player_id": 1630573,
   "source": "nba_static"
+ },
+ "4065813": {
+  "name": "Alpha Diallo",
+  "player_id": 904065813,
+  "source": "synthetic"
  },
  "4066211": {
   "name": "Robert Williams III",
@@ -1799,6 +1809,11 @@
   "player_id": 1631103,
   "source": "nba_static"
  },
+ "4565698": {
+  "name": "Bryce Hopkins",
+  "player_id": 904565698,
+  "source": "synthetic"
+ },
  "4566434": {
   "name": "Franz Wagner",
   "player_id": 1630532,
@@ -2192,6 +2207,11 @@
  "4697270": {
   "name": "Payton Sandfort",
   "player_id": 904697270,
+  "source": "synthetic"
+ },
+ "4698719": {
+  "name": "Trevon Brazile",
+  "player_id": 904698719,
   "source": "synthetic"
  },
  "4700818": {
