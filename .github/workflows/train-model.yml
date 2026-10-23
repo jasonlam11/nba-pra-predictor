@@ -28,11 +28,11 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.9"
+          python-version: "3.12"
           cache: pip
 
       - run: pip install -r backend/requirements-data.txt
@@ -44,7 +44,7 @@ jobs:
             --seasons "${{ github.event.inputs.seasons || 4 }}" \
             --out models/pra_model_candidate.pkl
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: pra-model-candidate
           path: backend/models/pra_model_candidate.pkl

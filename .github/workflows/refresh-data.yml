@@ -41,12 +41,13 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          # Pinned to the serving runtime so the model pickle round-trips.
-          python-version: "3.9"
+          # Matches the serving runtime (backend/.python-version). 3.9 is not
+          # available on the Ubuntu 26.04 runners ubuntu-latest moved to.
+          python-version: "3.12"
           cache: pip
 
       - name: Install data-job dependencies
