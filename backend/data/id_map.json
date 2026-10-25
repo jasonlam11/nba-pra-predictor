@@ -1499,6 +1499,11 @@
   "player_id": 1642877,
   "source": "nba_static"
  },
+ "4432187": {
+  "name": "Reece Beekman",
+  "player_id": 1641736,
+  "source": "nba_static"
+ },
  "4432190": {
   "name": "Andre Jackson Jr.",
   "player_id": 1641748,
@@ -2764,10 +2769,20 @@
   "player_id": 1641729,
   "source": "nba_static"
  },
+ "5105841": {
+  "name": "Felix Okpara",
+  "player_id": 905105841,
+  "source": "synthetic"
+ },
  "5105977": {
   "name": "Rasheer Fleming",
   "player_id": 1642853,
   "source": "nba_static"
+ },
+ "5106040": {
+  "name": "Tobi Lawal",
+  "player_id": 905106040,
+  "source": "synthetic"
  },
  "5106058": {
   "name": "Emanuel Sharp",
@@ -2783,6 +2798,11 @@
   "name": "Gradey Dick",
   "player_id": 1641711,
   "source": "nba_static"
+ },
+ "5106262": {
+  "name": "Zuby Ejiofor",
+  "player_id": 905106262,
+  "source": "synthetic"
  },
  "5106268": {
   "name": "Nae'Qwan Tomlin",
@@ -3028,6 +3048,11 @@
   "name": "Joan Beringer",
   "player_id": 1642866,
   "source": "nba_static"
+ },
+ "5281370": {
+  "name": "Hannes Steinbach",
+  "player_id": 905281370,
+  "source": "synthetic"
  },
  "5289900": {
   "name": "Mohamed Diawara",
