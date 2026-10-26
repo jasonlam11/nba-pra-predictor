@@ -2099,6 +2099,11 @@
   "player_id": 1641717,
   "source": "nba_static"
  },
+ "4683730": {
+  "name": "Jaden Akins",
+  "player_id": 904683730,
+  "source": "synthetic"
+ },
  "4683736": {
   "name": "Kobe Bufkin",
   "player_id": 1641723,
@@ -2443,6 +2448,11 @@
   "name": "Dominick Barlow",
   "player_id": 1631230,
   "source": "nba_static"
+ },
+ "4870564": {
+  "name": "Joshua Jefferson",
+  "player_id": 904870564,
+  "source": "synthetic"
  },
  "4871141": {
   "name": "Ariel Hukporti",
@@ -3042,6 +3052,11 @@
  "5254165": {
   "name": "Keaton Wagler",
   "player_id": 905254165,
+  "source": "synthetic"
+ },
+ "5258459": {
+  "name": "Ebuka Okorie",
+  "player_id": 905258459,
   "source": "synthetic"
  },
  "5279129": {
