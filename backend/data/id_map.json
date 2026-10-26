@@ -2459,6 +2459,11 @@
   "player_id": 1630581,
   "source": "nba_static"
  },
+ "4873090": {
+  "name": "Labaron Philon Jr.",
+  "player_id": 904873090,
+  "source": "synthetic"
+ },
  "4873138": {
   "name": "Ace Bailey",
   "player_id": 1642846,
@@ -2908,6 +2913,11 @@
   "name": "Alex Sarr",
   "player_id": 1642259,
   "source": "nba_static"
+ },
+ "5164559": {
+  "name": "Nate Ament",
+  "player_id": 905164559,
+  "source": "synthetic"
  },
  "5165257": {
   "name": "Trentyn Flowers",
