@@ -2429,6 +2429,11 @@
   "player_id": 1642267,
   "source": "nba_static"
  },
+ "4848625": {
+  "name": "Dailyn Swain",
+  "player_id": 904848625,
+  "source": "synthetic"
+ },
  "4868423": {
   "name": "Jaden Hardy",
   "player_id": 1630702,
@@ -2629,6 +2634,11 @@
   "player_id": 1642843,
   "source": "nba_static"
  },
+ "5041951": {
+  "name": "Meleek Thomas",
+  "player_id": 905041951,
+  "source": "synthetic"
+ },
  "5041953": {
   "name": "Koa Peat",
   "player_id": 905041953,
@@ -2759,6 +2769,11 @@
   "player_id": 1641737,
   "source": "nba_static"
  },
+ "5105800": {
+  "name": "Josh Dix",
+  "player_id": 905105800,
+  "source": "synthetic"
+ },
  "5105806": {
   "name": "Jett Howard",
   "player_id": 1641724,
@@ -2787,6 +2802,11 @@
  "5105841": {
   "name": "Felix Okpara",
   "player_id": 905105841,
+  "source": "synthetic"
+ },
+ "5105854": {
+  "name": "Braden Smith",
+  "player_id": 905105854,
   "source": "synthetic"
  },
  "5105977": {
@@ -2877,6 +2897,11 @@
  "5142620": {
   "name": "Darius Acuff Jr.",
   "player_id": 905142620,
+  "source": "synthetic"
+ },
+ "5142621": {
+  "name": "Chris Cenac Jr.",
+  "player_id": 905142621,
   "source": "synthetic"
  },
  "5144091": {
