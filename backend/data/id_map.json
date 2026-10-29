@@ -2904,6 +2904,11 @@
   "player_id": 905142621,
   "source": "synthetic"
  },
+ "5142718": {
+  "name": "AJ Dybantsa",
+  "player_id": 905142718,
+  "source": "synthetic"
+ },
  "5144091": {
   "name": "Jeremiah Fears",
   "player_id": 1642847,
@@ -3038,6 +3043,11 @@
   "name": "Kasparas Jakucionis",
   "player_id": 1642857,
   "source": "nba_static"
+ },
+ "5214989": {
+  "name": "Bogoljub Markovic",
+  "player_id": 905214989,
+  "source": "synthetic"
  },
  "5217746": {
   "name": "Yang Hansen",
