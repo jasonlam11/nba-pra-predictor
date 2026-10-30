@@ -3054,6 +3054,11 @@
   "player_id": 1642905,
   "source": "nba_static"
  },
+ "5231919": {
+  "name": "Karim Lopez",
+  "player_id": 905231919,
+  "source": "synthetic"
+ },
  "5238230": {
   "name": "Tre Johnson",
   "player_id": 1642848,
