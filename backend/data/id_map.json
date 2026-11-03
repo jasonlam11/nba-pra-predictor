@@ -2849,6 +2849,11 @@
   "player_id": 1641772,
   "source": "nba_static"
  },
+ "5106283": {
+  "name": "Dillon Mitchell",
+  "player_id": 905106283,
+  "source": "synthetic"
+ },
  "5107156": {
   "name": "Lachlan Olbrich",
   "player_id": 1642950,
