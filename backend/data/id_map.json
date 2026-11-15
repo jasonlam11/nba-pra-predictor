@@ -2429,6 +2429,11 @@
   "player_id": 1642914,
   "source": "nba_static"
  },
+ "4837356": {
+  "name": "Tre Donaldson",
+  "player_id": 904837356,
+  "source": "synthetic"
+ },
  "4845363": {
   "name": "Cam Christie",
   "player_id": 1642353,
