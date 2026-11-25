@@ -1286,8 +1286,8 @@
  },
  "4397784": {
   "name": "Malachi Smith",
-  "player_id": 904397784,
-  "source": "synthetic"
+  "player_id": 1641869,
+  "source": "override"
  },
  "4397821": {
   "name": "Nate Williams",
@@ -2116,8 +2116,8 @@
  },
  "4683742": {
   "name": "Julian Reese",
-  "player_id": 904683742,
-  "source": "synthetic"
+  "player_id": 1642882,
+  "source": "override"
  },
  "4683747": {
   "name": "Jaylon Tyson",
@@ -2161,8 +2161,8 @@
  },
  "4683934": {
   "name": "Jahmai Mashack",
-  "player_id": 904683934,
-  "source": "synthetic"
+  "player_id": 1642942,
+  "source": "override"
  },
  "4683935": {
   "name": "Blake Wesley",
@@ -2183,6 +2183,11 @@
   "name": "Rob Dillingham",
   "player_id": 1642265,
   "source": "nba_static"
+ },
+ "4684682": {
+  "name": "Jonas Aidoo",
+  "player_id": 904684682,
+  "source": "synthetic"
  },
  "4684740": {
   "name": "Amen Thompson",
@@ -2226,8 +2231,8 @@
  },
  "4698719": {
   "name": "Trevon Brazile",
-  "player_id": 904698719,
-  "source": "synthetic"
+  "player_id": 1642350,
+  "source": "override"
  },
  "4700818": {
   "name": "Vladislav Goldin",
@@ -2351,8 +2356,8 @@
  },
  "4703396": {
   "name": "Graham Ike",
-  "player_id": 904703396,
-  "source": "synthetic"
+  "player_id": 1643633,
+  "source": "override"
  },
  "4703421": {
   "name": "Taelon Peter",
@@ -2366,8 +2371,8 @@
  },
  "4703889": {
   "name": "Jayson Kent",
-  "player_id": 904703889,
-  "source": "synthetic"
+  "player_id": 1643257,
+  "source": "override"
  },
  "4706557": {
   "name": "Chris Youngblood",
@@ -2496,8 +2501,8 @@
  },
  "4873090": {
   "name": "Labaron Philon Jr.",
-  "player_id": 904873090,
-  "source": "synthetic"
+  "player_id": 1642889,
+  "source": "override"
  },
  "4873138": {
   "name": "Ace Bailey",
@@ -2506,8 +2511,8 @@
  },
  "4873153": {
   "name": "Morez Johnson Jr.",
-  "player_id": 904873153,
-  "source": "synthetic"
+  "player_id": 1643516,
+  "source": "override"
  },
  "4873201": {
   "name": "Asa Newell",
@@ -2646,8 +2651,8 @@
  },
  "5041935": {
   "name": "Cameron Boozer",
-  "player_id": 905041935,
-  "source": "synthetic"
+  "player_id": 1643409,
+  "source": "override"
  },
  "5041939": {
   "name": "Cooper Flagg",
@@ -2656,18 +2661,18 @@
  },
  "5041951": {
   "name": "Meleek Thomas",
-  "player_id": 905041951,
-  "source": "synthetic"
+  "player_id": 1643509,
+  "source": "override"
  },
  "5041953": {
   "name": "Koa Peat",
-  "player_id": 905041953,
-  "source": "synthetic"
+  "player_id": 1643520,
+  "source": "override"
  },
  "5041955": {
   "name": "Darryn Peterson",
-  "player_id": 905041955,
-  "source": "synthetic"
+  "player_id": 1643408,
+  "source": "override"
  },
  "5044385": {
   "name": "Leonard Miller",
@@ -2681,8 +2686,8 @@
  },
  "5060701": {
   "name": "Christian Anderson",
-  "player_id": 905060701,
-  "source": "synthetic"
+  "player_id": 1643515,
+  "source": "override"
  },
  "5061568": {
   "name": "Carter Bryant",
@@ -2706,8 +2711,8 @@
  },
  "5075626": {
   "name": "Baba Miller",
-  "player_id": 905075626,
-  "source": "synthetic"
+  "player_id": 1642394,
+  "source": "override"
  },
  "5081727": {
   "name": "Sidy Cissoko",
@@ -2716,8 +2721,8 @@
  },
  "5082206": {
   "name": "Brayden Burries",
-  "player_id": 905082206,
-  "source": "synthetic"
+  "player_id": 1643415,
+  "source": "override"
  },
  "5093267": {
   "name": "Collin Murray-Boyles",
@@ -2726,8 +2731,8 @@
  },
  "5095151": {
   "name": "Caleb Wilson",
-  "player_id": 905095151,
-  "source": "synthetic"
+  "player_id": 1643410,
+  "source": "override"
  },
  "5099752": {
   "name": "Rayan Rupert",
@@ -2736,8 +2741,8 @@
  },
  "5101761": {
   "name": "Mikel Brown Jr.",
-  "player_id": 905101761,
-  "source": "synthetic"
+  "player_id": 1643414,
+  "source": "override"
  },
  "5104155": {
   "name": "Bilal Coulibaly",
@@ -2791,8 +2796,8 @@
  },
  "5105800": {
   "name": "Josh Dix",
-  "player_id": 905105800,
-  "source": "synthetic"
+  "player_id": 1643717,
+  "source": "override"
  },
  "5105806": {
   "name": "Jett Howard",
@@ -2801,8 +2806,8 @@
  },
  "5105809": {
   "name": "Tarris Reed Jr.",
-  "player_id": 905105809,
-  "source": "synthetic"
+  "player_id": 1643542,
+  "source": "override"
  },
  "5105817": {
   "name": "Carson Cooper",
@@ -2816,8 +2821,8 @@
  },
  "5105837": {
   "name": "Bruce Thornton",
-  "player_id": 905105837,
-  "source": "synthetic"
+  "player_id": 1643570,
+  "source": "override"
  },
  "5105839": {
   "name": "Brice Sensabaugh",
@@ -2831,8 +2836,8 @@
  },
  "5105854": {
   "name": "Braden Smith",
-  "player_id": 905105854,
-  "source": "synthetic"
+  "player_id": 1643552,
+  "source": "override"
  },
  "5105977": {
   "name": "Rasheer Fleming",
@@ -2846,8 +2851,8 @@
  },
  "5106058": {
   "name": "Emanuel Sharp",
-  "player_id": 905106058,
-  "source": "synthetic"
+  "player_id": 1643567,
+  "source": "override"
  },
  "5106060": {
   "name": "Jarace Walker",
@@ -2861,8 +2866,8 @@
  },
  "5106262": {
   "name": "Zuby Ejiofor",
-  "player_id": 905106262,
-  "source": "synthetic"
+  "player_id": 1643544,
+  "source": "override"
  },
  "5106268": {
   "name": "Nae'Qwan Tomlin",
@@ -2881,8 +2886,8 @@
  },
  "5107157": {
   "name": "Ryan Conwell",
-  "player_id": 905107157,
-  "source": "synthetic"
+  "player_id": 1643553,
+  "source": "override"
  },
  "5107173": {
   "name": "Danny Wolf",
@@ -2931,8 +2936,8 @@
  },
  "5142620": {
   "name": "Darius Acuff Jr.",
-  "player_id": 905142620,
-  "source": "synthetic"
+  "player_id": 1643411,
+  "source": "override"
  },
  "5142621": {
   "name": "Chris Cenac Jr.",
@@ -2941,8 +2946,8 @@
  },
  "5142718": {
   "name": "AJ Dybantsa",
-  "player_id": 905142718,
-  "source": "synthetic"
+  "player_id": 1643407,
+  "source": "override"
  },
  "5144091": {
   "name": "Jeremiah Fears",
@@ -2956,13 +2961,13 @@
  },
  "5149077": {
   "name": "Kingston Flemings",
-  "player_id": 905149077,
-  "source": "synthetic"
+  "player_id": 1643412,
+  "source": "override"
  },
  "5149115": {
   "name": "Allen Graves",
-  "player_id": 905149115,
-  "source": "synthetic"
+  "player_id": 1643512,
+  "source": "override"
  },
  "5157066": {
   "name": "Johnny Furphy",
@@ -2991,8 +2996,8 @@
  },
  "5164559": {
   "name": "Nate Ament",
-  "player_id": 905164559,
-  "source": "synthetic"
+  "player_id": 1643417,
+  "source": "override"
  },
  "5165257": {
   "name": "Trentyn Flowers",
@@ -3021,8 +3026,8 @@
  },
  "5174983": {
   "name": "Aday Mara",
-  "player_id": 905174983,
-  "source": "synthetic"
+  "player_id": 1643530,
+  "source": "override"
  },
  "5175643": {
   "name": "Egor Demin",
@@ -3036,8 +3041,8 @@
  },
  "5175737": {
   "name": "Yaxel Lendeborg",
-  "player_id": 905175737,
-  "source": "synthetic"
+  "player_id": 1642865,
+  "source": "override"
  },
  "5176420": {
   "name": "Hayden Gray",
@@ -3111,8 +3116,8 @@
  },
  "5241364": {
   "name": "Bennett Stirtz",
-  "player_id": 905241364,
-  "source": "synthetic"
+  "player_id": 1642892,
+  "source": "override"
  },
  "5242496": {
   "name": "Noa Essengue",
@@ -3126,8 +3131,8 @@
  },
  "5254165": {
   "name": "Keaton Wagler",
-  "player_id": 905254165,
-  "source": "synthetic"
+  "player_id": 1643413,
+  "source": "override"
  },
  "5258459": {
   "name": "Ebuka Okorie",
